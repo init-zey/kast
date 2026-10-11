@@ -13,14 +13,14 @@ public partial class NGame : Node3D
     Alphabet<Func<Context,object>> FullAlphabet;
     public Alphabet<Func<Context,object>> ProgressAlphabet;
     /// <summary>cast 递归施法的深度上限，防止槽里的咒语互相施放导致无限递归。</summary>
-    const int MaxCastDepth=8;
+    const int MaxCastDepth=999;
     int castDepth;
     public Database DB;
     /// <summary>当前正在操纵某个对象的相机；HUD 与"当前施法者"都从这里取。</summary>
     public PlayerCamera ActiveCamera;
-    [Export] ClientWorld ClientWorld;
+    [Export] NLevel CurrentLevel;
     [Export] GpuParticles3D Particles;
-    Label SpellstateLabel;
+    [Export] public NSpellSlots SpellSlots;
     public void LoadProgress(Progress pg)
     {
         Instance=this;
@@ -34,7 +34,11 @@ public partial class NGame : Node3D
         FullAlphabet.AddWord(DB.Gen("that",5),"Adv",typeof(Vector3));
         FullAlphabet.AddNoun(DB.Gen("i",2),(ctx)=>ctx.GetItem(".me") as NObject); // 我
         FullAlphabet.AddNoun(DB.Gen("you",2),(ctx)=> ctx.GetItem(".you") as NObject); // 你
-        FullAlphabet.AddNoun(DB.Gen("sky/air",4), (ctx) =>{
+        // 天 = 0、地 = 1：同一个字既是名词（天空/大地，原来的方向与质量语义），又能当二进制位用。
+        // 位读法靠 #bit 旗标区分，和名词读法的 #be 是同一个套路：只是"问法"不同，词条本身不用改。
+        var sky=DB.Gen("sky/air",4);
+        Func<Context,object> skyValue=(ctx) =>{
+            if(ctx.GetFlag("#bit")) return 0;   // 数词读法：天 = 0
             var vec=Vector3.Up*10f;
             if(ctx.GetItem(".s") is Func<Context,object> snoun && snoun!=null)
             {
@@ -45,8 +49,13 @@ public partial class NGame : Node3D
                 return snoun(ctx).GetPosition()+vec;
             }
             return null;
-        }); // 天
-        FullAlphabet.AddNoun(DB.Gen("earth/solid",4), (ctx) =>{
+        };
+        FullAlphabet.AddNoun(sky,skyValue);          // N   -> 天（名词语义）
+        FullAlphabet.AddWord(sky,"Num",skyValue);    // Num -> 天（单独一个位也是一个数）
+        FullAlphabet.AddWord(sky,"Bit",skyValue);    // Bit -> 天（拼接时的右操作数）
+        var earth=DB.Gen("earth/solid",4);
+        Func<Context,object> earthValue=(ctx) =>{
+            if(ctx.GetFlag("#bit")) return 1;   // 数词读法：地 = 1
             var vec=Vector3.Up*10f;
             if(ctx.GetItem(".s") is Func<Context,object> snoun && snoun!=null)
             {
@@ -57,7 +66,10 @@ public partial class NGame : Node3D
                 return snoun(ctx).GetPosition()-vec;
             }
             return null;
-        }); // 地
+        };
+        FullAlphabet.AddNoun(earth,earthValue);          // N   -> 地（名词语义）
+        FullAlphabet.AddWord(earth,"Num",earthValue);    // Num -> 地
+        FullAlphabet.AddWord(earth,"Bit",earthValue);    // Bit -> 地
         FullAlphabet.AddTVerb(DB.Gen("go",3), (ctx,s,o)=>{
             var sobj=(NObject)s(ctx);
             if(o!=null)
@@ -140,42 +152,72 @@ public partial class NGame : Node3D
             if(o==null)
             {
                 // 不带数词就是释放当前选中的槽
-                caster.CastCurrent(targets);
+                caster.CastSlot(SpellSlots.Slot,targets);
                 return;
             }
-            if(o(ctx) is not int number)
+            if(o(ctx) is not int number||number<1||number>9)
             {
-                return;   // 宾语不是数词（例如误用了普通名词），不施法
+                return;   // 宾语不是数词，或者写成了 0 / 超出九个槽（二进制写法很容易出现这两种）
             }
             caster.CastSlot(number-1,targets);
         }); // 施放
-        // 数词作宾语：Num 的负载本身就是"取出这个数字"的取值函数（不像 N 的负载是上下文变换），
-        // 所以这里直接把负载绑成 .o，及物动词便能用 o(ctx) 取出数字，语义与 Vt -> Vt N 一致。
-        FullAlphabet.Grammar.AddRule("Vt -> Vt Num",(verb, num) => (Func<Context,Context>)((Context ctx) =>
+        // —— 二进制数词：天 = 0、地 = 1，位序列最左位是最高位 ——
+        // Num -> Num Bit 是左递归拼接：左边的数左移一位，再补上这一位。
+        // "Num -> Bit"（一元规则）文法不支持，所以位词条是直接登记成 Num 的（见上面 AddWord）。
+        FullAlphabet.Grammar.AddRule("Num -> Num Bit", AppendBit);
+        // 数词作宾语：Num 的值是"取出这个数字"的槽（不像 N 的负载是上下文变换）。
+        // 因为 Vt -> Vt Num 也是左递归的，一串位可能被切成好几段数词宾语，
+        // 所以这里把各段拼成一个数（见 BindNumber）：无论怎么切，动词拿到的都是同一个值。
+        FullAlphabet.Grammar.AddRule("Vt -> Vt Num",(verb, num) => (Context ctx) =>
         {
-            var inner=new Context(ctx);
-            inner.Add(".o",num);
-            return ((Func<Context,Context>)verb)(inner);
-        }));
-        AddNumerals();
+            var inner = BindNumber(ctx, num);
+            return ((Func<Context, Context>)verb)(inner);
+        });
         FullAlphabet.CompileTokens();
         // ProgressAlphabet=FullAlphabet.Derive(pg.UnlockedSymbols);
-        ProgressAlphabet=new Alphabet<Func<Context, object>>(FullAlphabet);//FIXME:DEBUG
-        File.WriteAllText("words.csv",DB.AsText());
+        ProgressAlphabet=FullAlphabet.Derive(FullAlphabet.GetKeys());//FIXME:DEBUG
+        File.WriteAllText("words.csv",DB.AsText());//FIXME:DEBUG
+        LoadLevel(pg.LevelID);
     }
 
     /// <summary>
-    /// 登记 1..9 的数词：每个数字是一个由 <see cref="Database.Gen"/> 生成的程序词（可用手势画出），
-    /// 词法范畴为 Num，语义负载是"取出这个数字"的取值函数，供 cast 这类及物动词当宾语。
+    /// 数词绑进 .o 时用的槽：值 + 位数。绑成 <c>slot.Get</c> 这个委托，拼接时靠 <c>Delegate.Target</c>
+    /// 认出"上一个 .o 是不是一个数"——只靠旗标分不清"名词宾语"和"被名词覆盖过的数词宾语"。
     /// </summary>
-    void AddNumerals()
+    sealed class NumSlot(int bits,Func<Context,object> value)
     {
-        for(var number=1;number<=9;number++)
-        {
-            var token=DB.Gen(number.ToString());
-            var value=number;   // 闭包捕获：不能直接用循环变量
-            FullAlphabet.AddWord(token,"Num",(Func<Context,object>)(ctx=>value));
-        }
+        public readonly int Bits=bits;
+        public readonly Func<Context,object> Value=value;
+        public object Get(Context ctx)=>Value(ctx);
+    }
+
+    /// <summary>把数词的值统一成槽：终结数词（单独一个位）的负载要加 #bit 才读得出 0/1。</summary>
+    static NumSlot AsNum(object? value)=>value as NumSlot
+        ?? new NumSlot(1,(Func<Context,object>)(c=>((Func<Context,object>)value!)(c.WithFlag("#bit"))));
+
+    /// <summary>Num -> Num Bit：左边的数左移一位，再补上这一位。</summary>
+    static NumSlot AppendBit(object? high,object? low)
+    {
+        var upper=AsNum(high);
+        return new NumSlot(upper.Bits+1,(Func<Context,object>)(c=>
+            Convert.ToInt32(upper.Value(c))*2+Convert.ToInt32(((Func<Context,object>)low!)(c.WithFlag("#bit")))));
+    }
+
+    /// <summary>
+    /// Vt -> Vt Num：本段在高位，接到"已经绑好的低位段"前面；没有低位段就自成一段。
+    /// 这样 <c>地天天地</c> 无论被切成几段数词宾语，动词拿到的都是同一个 9。
+    /// </summary>
+    static Context BindNumber(Context ctx,object? num)
+    {
+        var segment=AsNum(num);
+        var lower=ctx.GetItem(".o") is Func<Context,object> value&&value.Target is NumSlot slot?slot:null;
+        var combined=lower is null
+            ? new NumSlot(segment.Bits,segment.Value)
+            : new NumSlot(segment.Bits+lower.Bits, c =>
+                Convert.ToInt32(segment.Value(c)) * (1 << lower.Bits) + Convert.ToInt32(lower.Value(c)));
+        var inner=new Context(ctx);
+        inner.Add(".o",(Func<Context,object>)combined.Get);
+        return inner;
     }
     public void SaveProgress(Progress pg)
     {
@@ -190,57 +232,16 @@ public partial class NGame : Node3D
         return camera!=null&&camera.Player==obj?camera:null;
     }
 
-    /// <summary>当前被操纵对象上挂的施法者，没有就是 null。</summary>
-    public static NCaster ActiveCaster => Instance?.ActiveCamera?.Player?.Type as NCaster;
-
-    /// <summary>更新 HUD 上的施法状态文字。</summary>
-    public void SetSpellState(string state)
-    {
-        SpellstateLabel.Text=state;
-    }
-
-    /// <summary>
-    /// 把输入切成最左最长匹配的词序列。与 <see cref="Alphabet{O}.Tokenize"/> 的区别是后者
-    /// 遇到不完整输入会整体返回 null，这里只保留能完整成词的部分，末尾没写完的残片直接丢掉。
-    /// </summary>
-    public static List<string> SplitTokens(string input)
-    {
-        var result=new List<string>();
-        if(string.IsNullOrEmpty(input))
-        {
-            return result;
-        }
-        var tokens=Instance.ProgressAlphabet.Tokens;
-        var rest=input;
-        while(rest.Length>0)
-        {
-            string matched=null;
-            foreach(var token in tokens)   // Tokens 按长度降序，第一个命中即最长匹配
-            {
-                if(token.Length<=rest.Length&&rest.AsSpan(0,token.Length).SequenceEqual(token))
-                {
-                    matched=token;
-                    break;
-                }
-            }
-            if(matched==null)
-            {
-                break; // 剩下的都不成词（末尾残片），不显示
-            }
-            result.Add(matched);
-            rest=rest[matched.Length..];
-        }
-        return result;
-    }
-
     /// <summary>
     /// 把输入里已经成词的完整 token 逐个翻译成真实单词并拼接，供 SpellInput 顶部实时显示。
-    /// 末尾未完成的 token 不显示
+    /// 末尾没画完的残片不显示；分词走的是和提交（<see cref="NCaster.CheckSpellInput"/>）完全同一套规则
+    /// （<see cref="Alphabet{O}.TokenizePrefix"/>：逐段最长匹配），
+    /// 所以界面上显示的词序就是提交时会被接受的那一种，不会再出现"显示成词却填不进槽"。
     /// </summary>
     public string Transcript(string input)
     {
         var parts=new List<string>();
-        foreach(var token in SplitTokens(input))
+        foreach(var token in Instance.ProgressAlphabet.TokenizePrefix(input,out _))
         {
             parts.Add(DB.GetRealWord(token));
         }
@@ -287,8 +288,6 @@ public partial class NGame : Node3D
     }
     public override void _EnterTree()
     {
-        SpellstateLabel=GetNode<Label>("%SpellStateLabel");
-        SpellstateLabel.Text="spell_state.empty";
         Particles.OneShot=true;
         // 从主菜单进来时读存档（新游戏已经写好了种子）；直接运行 Game.tscn 调试则保持满字母表
         var progress=SaveSystem.LoadProgress();
@@ -297,5 +296,15 @@ public partial class NGame : Node3D
             LoadProgress(progress);
         }
     }
-
+    public void LoadLevel(string id)
+    {
+        SaveSystem.Current.LevelID=id;
+        SaveProgress(SaveSystem.Current);
+        if(CurrentLevel!=null)
+        {
+            CurrentLevel.QueueFree();
+        }
+        CurrentLevel=Helper.LoadScene<NLevel>($"Levels/{id}");
+        AddChild(CurrentLevel);
+    }
 }

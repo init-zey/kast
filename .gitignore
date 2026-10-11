@@ -36,6 +36,9 @@ mono_crash.*.json
 *.pck
 /build/
 /export/
+# Godot 编辑器“导出项目”的默认输出目录（Kast.exe / data_*.dll / kast.zip 等，
+# 一次导出约 250 MB 且全为二进制，绝不入库）
+/dist/
 # 导出配置可能内含 Android 签名口令，按官方建议不入库
 export_presets.cfg
 

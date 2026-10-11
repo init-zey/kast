@@ -24,12 +24,6 @@ public class Alphabet<O> : Context
     public IReadOnlyList<string> Tokens => tokens;
     PrefixTrie? trie;
 
-    /// <summary>
-    /// 边界合并表：<c>boundaries[i][j]</c> 是 tokens[i] 的真后缀与 tokens[j] 的真前缀重合的最大长度，没有则为 0。
-    /// 与 <see cref="trie"/> 一样在 <see cref="CompileTokens"/> 之后作废，下次分词时重建。
-    /// </summary>
-    int[][]? boundaries;
-
     /// <summary>句法规则表。</summary>
     public Grammar Grammar { get; } = new();
 
@@ -266,114 +260,80 @@ public class Alphabet<O> : Context
             .OrderByDescending(t => t.Length)
             .ToArray();
         trie=null;        // tokens 变了，前缀树作废
-        boundaries=null;  // 边界合并表同理
     }
 
     /// <summary>
-    /// 分词：把输入切成一个词条序列。相邻词条的公共前后缀<b>强制合并</b>——
-    /// 前一个词条的真后缀若等于后一个词条的真前缀，这段重叠只写一次，
-    /// 于是后一个词条必须从重叠处开始，而不是接在前一个词条末尾。
-    /// 把这样一对词条首尾相接写成的"未合并"形式不是合法字符串。
+    /// 分词：从左到右贪心取最长匹配，读不动就整体判失败（返回 null）。
     /// <para>
-    /// 例：词条表 {abc, bcd} 里，"abcd" 是 abc 与 bcd 合并公共的 "bc" 后的写法，
-    /// 故解析为 [abc, bcd]；"abcbcd" 是二者首尾相接的写法（重叠没有合并），故解析失败。
+    /// 词条表按长度降序排列，"第一个命中的词条"就是该位置上最长的词条。
+    /// 相邻词条之间的公共前后缀<b>不做</b>任何合并：两个词条首尾相接写成的串就是它们的直接拼接。
+    /// 例：词条表 {abc, bcd} 里 "abcbcd" 读作 [abc, bcd]；而 "abcd" 在 'd' 处读不动，返回 null。
     /// </para>
     /// <para>
-    /// 每一步按词条表顺序（长的在前）尝试，失败时回溯；先试"接在已覆盖位置继续读"的词条，
-    /// 都不行才试"重叠续读"的词条。于是不含未合并边界的输入结果与逐段最长匹配完全一致，
-    /// 重叠只在原样读不下去时才启用。同一输入存在多种合法切分时（词条互为前后缀之类的歧义表）
-    /// 取这个次序下的第一个。无解返回 null。
+    /// 代价是同一串可能有多种读法时只取贪心的那一种（例如 {ab, b} 下 "ab" 读作 [ab] 而不是其它切法）；
+    /// 好处是它与"边画边显示"用的前缀版 <see cref="TokenizePrefix"/> 是同一套规则，
+    /// 不需要额外约定就能保证"看到的读法 = 提交时会被接受的读法"。
     /// </para>
     /// </summary>
     public List<string>? Tokenize(string input)
     {
-        // 空输入没有任何词条，与旧实现一致地返回空切分而不是失败
-        if (string.IsNullOrEmpty(input)) return [];
-        var table=BoundaryTable();
-        var path=new List<int>();
-        // 已经证明走不通的 (前一词条, 已覆盖到的位置)；状态只由这两项决定，故可安全记忆
-        var dead=new HashSet<(int Last, int End)>();
+        var segment=TokenizePrefix(input,out var consumed);
+        // 空输入返回空切分而不是失败；末尾有读不动的残片就整体失败
+        return consumed==input.Length?segment:null;
+    }
 
-        // 词条 index 能否正好落在 [start, start+len)
-        bool Occurs(int index,int start)
+    /// <summary>
+    /// 分词的前缀版本：从左到右贪心取最长匹配，读不动就停在那个位置。
+    /// 并用 <paramref name="consumed"/> 输出已经覆盖到的字符数（末尾那段残片不算）。
+    /// 连一个词都读不出时返回空表、<paramref name="consumed"/> 为 0。
+    /// <para>
+    /// 这是给"边画边显示"用的：<paramref name="consumed"/> 等于输入长度时结果与
+    /// <see cref="Tokenize"/> 完全相同，所以界面上显示的词序就是提交时会被接受的那一种，
+    /// 不会出现"看着已经成词、却填不进槽"。
+    /// </para>
+    /// </summary>
+    public List<string> TokenizePrefix(string input,out int consumed)
+    {
+        var segment=new List<string>();
+        consumed=0;
+        if(string.IsNullOrEmpty(input)||tokens.Length==0) return segment;
+        while(consumed<input.Length)
         {
-            var token=tokens[index];
-            return start>=0
-                && start+token.Length<=input.Length
-                && input.AsSpan(start,token.Length).SequenceEqual(token);
-        }
-
-        // 刚匹配完 tokens[last]、输入已覆盖到 end（不含）；挑下一个词条直到恰好用完
-        bool Extend(int last,int end)
-        {
-            if(end==input.Length) return true;
-            if(!dead.Add((last,end))) return false;
-            // 两轮：先试"接在覆盖到的位置继续读"（与前一词条没有公共边界），
-            // 再试"重叠续读"（起点提前到公共边界处）。
-            // 前者优先，使本来就不含未合并边界的切分原样返回：只有读不下去时才动用重叠。
-            for(var pass=0;pass<2;pass++)
+            var matched=-1;
+            for(var index=0;index<tokens.Length;index++)   // 词条按长度降序，第一个命中即最长匹配
             {
-                for(var next=0;next<tokens.Length;next++)
+                if(Matches(index,input,consumed))
                 {
-                    var boundary=table[last][next];
-                    if((boundary!=0)!=(pass==1)) continue;
-                    // 强制合并：起点由两个词条的最大公共边界唯一确定
-                    var start=end-boundary;
-                    if(!Occurs(next,start)) continue;
-                    path.Add(next);
-                    if(Extend(next,start+tokens[next].Length)) return true;
-                    path.RemoveAt(path.Count-1);
+                    matched=index;
+                    break;
                 }
             }
-            return false;
-        }
-
-        for(var first=0;first<tokens.Length;first++)
-        {
-            // 首词条只能从 0 开始：它前面没有词条可供合并
-            if(!Occurs(first,0)) continue;
-            path.Add(first);
-            if(Extend(first,tokens[first].Length)) return [..path.Select(i=>tokens[i])];
-            path.RemoveAt(path.Count-1);
-        }
-        return null;
-    }
-
-    /// <summary>取（首次使用时构建）边界合并表。</summary>
-    int[][] BoundaryTable()
-    {
-        if(boundaries is not null) return boundaries;
-        var table=new int[tokens.Length][];
-        for(var i=0;i<tokens.Length;i++)
-        {
-            table[i]=new int[tokens.Length];
-            for(var j=0;j<tokens.Length;j++)
+            if(matched<0)
             {
-                table[i][j]=CommonBoundary(tokens[i],tokens[j]);
+                break;   // 这个位置读不出任何词条：从这儿起都是残片
             }
+            segment.Add(tokens[matched]);
+            consumed+=tokens[matched].Length;
         }
-        return boundaries=table;
+        return segment;
     }
 
-    /// <summary>
-    /// 两个词条的最大公共边界：a 的真后缀同时是 b 的真前缀时的最长重合长度，没有则为 0。
-    /// 上界取较短词条的长度减一，因为两边都必须是<b>真</b>前缀/真后缀：
-    /// 取满会让 b 完全落在 a 的覆盖范围内（重合后位置不前进），或让 b 与前一个词条本身同形
-    /// （与"单个词条"的读法冲突）。
-    /// </summary>
-    static int CommonBoundary(string a,string b)
+    /// <summary>词条 <paramref name="index"/> 能否正好落在 <paramref name="input"/> 的 [start, start+len)。</summary>
+    bool Matches(int index,string input,int start)
     {
-        for(var k=Math.Min(a.Length,b.Length)-1;k>0;k--)
-        {
-            if(string.CompareOrdinal(a,a.Length-k,b,0,k)==0) return k;
-        }
-        return 0;
+        var token=tokens[index];
+        return start>=0
+            && start+token.Length<=input.Length
+            && input.AsSpan(start,token.Length).SequenceEqual(token);
     }
 
     /// <summary>
-    /// 一次性前缀预测：返回所有 t，使 t 的某个真前缀是 <paramref name="input"/> 的真后缀（S 即 <see cref="tokens"/>）。
-    /// 结果按词条长度降序，取第一个即最长匹配；无匹配、空输入或尚未 <see cref="CompileTokens"/> 时为空。
-    /// 需要逐字符增量预测请用 <see cref="CreatePrediction"/>。
+    /// 一次性预测：返回所有"补齐就能成词"的候选词条名。
+    /// 判据见 <see cref="PrefixTrie.Results"/>——已画出的这一截须是词条的一段连续子串、词条更长，
+    /// 且该词条不能已经被整段画在输入里。结果按词条长度降序，取第一个即最长匹配；
+    /// 无匹配、空输入或尚未 <see cref="CompileTokens"/> 时为空。
+    /// 这里只要词名；需要偏移与笔画数（界面据此画候补）请用
+    /// <see cref="CreatePrediction"/> 看 <see cref="Prediction.PredictionResult"/>。
     /// </summary>
     public IReadOnlyList<string> Predict(string input)
     {
@@ -383,12 +343,12 @@ public class Alphabet<O> : Context
         {
             prediction.PushChar(c);
         }
-        return prediction.PredictionResult;
+        return [..prediction.PredictionResult.Select(match=>match.Token)];
     }
 
     /// <summary>
     /// 取一个新的增量预测器：逐字符喂入，<see cref="Prediction.PredictionResult"/> 随之刷新。
-    /// 返回的预测器绑定当前前缀树，<see cref="CompileTokens"/> 之后需重新获取。
+    /// 返回的预测器绑定当前词条索引（前缀树 + 子串表），<see cref="CompileTokens"/> 之后需重新获取。
     /// </summary>
     public Prediction CreatePrediction()
     {
@@ -457,12 +417,19 @@ public class Alphabet<O> : Context
 }
 
 /// <summary>
-/// 词条前缀树 + 失败链，用于"NFA 式"的最长后缀匹配。
-/// 每个节点都代表某个词条的一个前缀，因此扫描结束时的活跃节点恰好就是
-/// "是 input 的后缀、又是某词条前缀"的那些串。
+/// 词条索引：一棵词条前缀树 + 一张"词条的全部真子串 → (词条, 偏移)"的表。
+/// 走步用前者判断"到这儿为止能不能切成若干完整词条"（<see cref="ConsumedEnds"/>），
+/// 查表用后者回答"已画出的这一截是哪些词条里的一段、落在第几位"（<see cref="Results"/>）。
+/// <para>
+/// 树上的失败链机制（<see cref="Node.Fail"/>、<see cref="Step"/>、<see cref="Close"/>）目前没有调用者，
+/// 留作以后做增量匹配用；每层的节点都代表某个词条的一个前缀。
+/// </para>
 /// </summary>
 class PrefixTrie
 {
+    /// <summary>词条里的一段：<paramref name="Offset"/> 是这一段的起点在词条里的位置（UTF-16 下标）。</summary>
+    readonly record struct Occurrence(string Token,int Offset);
+
     sealed class Node
     {
         public readonly Dictionary<Rune,int> Next=[];
@@ -477,6 +444,9 @@ class PrefixTrie
 
     readonly List<Node> nodes=[];
 
+    /// <summary>词条的全部真子串 → 它在哪些词条里出现、出现在第几位（同一子串在同一个词条里出现多次就登记多条，偏移升序）。</summary>
+    readonly Dictionary<string,List<Occurrence>> occurrences=new(StringComparer.Ordinal);
+
     public static PrefixTrie Build(string[] tokens)
     {
         var trie=new PrefixTrie();
@@ -484,6 +454,7 @@ class PrefixTrie
         foreach(var token in tokens)
         {
             trie.Insert(token);
+            trie.Index(token);
         }
         trie.LinkFailures();
         trie.MarkDeepest(0);
@@ -504,6 +475,40 @@ class PrefixTrie
             node=next;
         }
         nodes[node].Terms.Add(token);
+    }
+
+    /// <summary>
+    /// 登记一个词条的全部<b>真子串</b>（整词不算它自己的子串，因为画满了就不成其为预测）。
+    /// 预测时拿"已画出的那一截"直接查表，既省掉每次按键扫全表的子串搜索，又顺带拿到偏移——
+    /// 界面要用它回推整个词条的根旋转。代理对中间的位置不登记，避免把码位切成两半。
+    /// </summary>
+    void Index(string token)
+    {
+        for(var offset=0;offset<token.Length;offset++)
+        {
+            if(char.IsLowSurrogate(token[offset]))
+            {
+                continue;   // 起点落在代理对中间
+            }
+            for(var length=1;length<=token.Length-offset;length++)
+            {
+                if(offset==0&&length==token.Length)
+                {
+                    continue;   // 整词本身
+                }
+                if(char.IsHighSurrogate(token[offset+length-1]))
+                {
+                    continue;   // 终点落在代理对中间
+                }
+                var piece=token.Substring(offset,length);
+                if(!occurrences.TryGetValue(piece,out var found))
+                {
+                    found=[];
+                    occurrences[piece]=found;
+                }
+                found.Add(new Occurrence(token,offset));
+            }
+        }
     }
 
     /// <summary>BFS 建失败链：fail(x) 是 x 的最长真后缀，且本身也是树上一个节点。</summary>
@@ -575,43 +580,70 @@ class PrefixTrie
 
     /// <summary>
     /// 答案。
-    /// 判据：存在一个<b>可分词的位置</b> i（s[0..i] 能切成完整词条），使 s[i..] 是词条 t 的<b>真前缀</b>。
-    /// 也就是说，补全 t 之后剩下的部分必须拼成一个合法字符串；像 "cattl" 里那个 "l" 不算，
-    /// 因为 "cat" 已吃掉前三个字符，它前面还压着 "t"。
+    /// 判据：存在一个<b>可分词的位置</b> i（s[0..i) 能切成完整词条），使 s[i..] 是词条 t 的<b>一段连续子串</b>，
+    /// 且 t 比它长——已经画出来的这一截是词条的一部分，补齐剩下的笔画就能成词。
+    /// 从最长的那一截开始找，<b>第一截有候选的就定下来</b>，这样每条结果都对应"手上正画着的这一截"。
     /// <para>
-    /// 实现上有两处关键：<b>(1)</b> 先用 trie 走查剪枝——走不通的 tail 立刻跳过，不必去算可达性；
-    /// <b>(2)</b> 可达位置用一次动态规划算清后查表，而不是对每个 i 重新递归展开（后者是指数级的）。
+    /// 每条结果带三个数：<see cref="PredictionMatch.Offset"/> = 这一截落在词条第几位、
+    /// <see cref="PredictionMatch.MatchedLength"/> = 这一截的长度（界面据此回推整词的根旋转）、
+    /// <see cref="PredictionMatch.RemainingLength"/> = 词条里还没画出来的笔画数。
+    /// 同一个词条可能匹配多处（这一截在词条里出现不止一次），取<b>偏移最小</b>的那一次：偏移 0 时界面照直画，
+    /// 偏移大于 0 时界面沿词条开头的转折回退若干步得到整词朝向。
     /// </para>
-    /// 结果按词条长度降序。
+    /// <para>
+    /// <b>偏移大于 0 的候补接着画也得不到</b>，界面据此只显示 <see cref="PredictionMatch.FromStart"/> 的那些：
+    /// 要么词条开头那几笔还没画、补不到这一截前面去，要么那个起点落在不可分词的位置上（读不出这个词）。
+    /// 反过来说，若它开头那几笔已经画在一个可分词的位置上，那么更靠前的那个起点上就会报出这一截更长的前缀
+    /// （以偏移 0 的形式），扫描根本走不到现在的这一截。
+    /// </para>
+    /// <para>
+    /// <b>已经整段画出来的词条不算预测</b>：若这一截本身就是词条的尾巴、且它前面的笔画正好补齐了词条的开头
+    /// （即整个词条就落在已画串的末尾），说明玩家已经把这个词画完了，"还差几笔"没有意义。
+    /// 例：词条表 {a, b, ab} 下 "ab" → 空（"b" 是 "ab" 的一段，但前面的 "a" 已经把词条补齐了）。
+    /// </para>
+    /// 例：词条表 {abbc, cbbc} 下 "ab"→{abbc（偏移 0，已画 2，还差 2）}；"bbc"→{abbc、cbbc（偏移都是 1，
+    /// 已画 3，还差 1——缺的这一笔在两个词条的<b>开头</b>，接着往后画补不上）}；
+    /// "abc"→空（"a"/"ab" 都不是词条，"abc" 也不是任何词条的子串）；"abbc"→空（已经画满了）。
+    /// 结果按词条长度降序，每个词条至多一条。
     /// </summary>
-    internal IReadOnlyList<string> Results(string input)
+    internal IReadOnlyList<PredictionMatch> Results(string input)
     {
         var reachable=Reachable(input);
-        var hits=new HashSet<string>();
-        for(var i=0;i<=input.Length;i++)   // tail 必须非空，i=0（整个输入就是前缀）是合法起点
+        var chosen=new Dictionary<string,PredictionMatch>(StringComparer.Ordinal);
+        for(var start=0;start<input.Length;start++)   // tail 必须非空，start=0（整串就是那一截）是合法起点
         {
-            var tail=input[i..];
-            if(tail.Length==0) continue;
-            // 从根沿 tail 走；走不动就说明没有词条以 tail 为前缀（便宜的先做）
-            var node=0;
-            foreach(var rune in tail.EnumerateRunes())
+            if(!reachable[start]) continue;
+            var tail=input[start..];
+            if(!occurrences.TryGetValue(tail,out var found)) continue;
+            // 这一截是哪些词条里的一段：按可分词位置从长到短试，命中最长的那一截就收工
+            foreach(var occurrence in found)
             {
-                if(!nodes[node].Next.TryGetValue(rune,out var next))
+                if(AlreadyDrawn(input,start,tail.Length,occurrence)) continue;
+                if(chosen.TryGetValue(occurrence.Token,out var previous)&&previous.Offset<=occurrence.Offset)
                 {
-                    node=-1;
-                    break;
+                    continue;   // 同一个词条已经取了偏移更小的那一次
                 }
-                node=next;
+                chosen[occurrence.Token]=new PredictionMatch(occurrence.Token,tail.Length,occurrence.Offset);
             }
-            if(node<0) continue;
-            if(!reachable[i]) continue;
-            // tail 本身若不是词条（或只是同名的更短条目），子树里就是所有合法补全
-            foreach(var (_,child) in nodes[node].Next)
-            {
-                Gather(child,hits);
-            }
+            if(chosen.Count>0) break;
         }
-        return [.. hits.OrderByDescending(t => t.Length)];
+        return [.. chosen.Values.OrderByDescending(m=>m.Token.Length)
+            .ThenBy(m=>m.Token,StringComparer.Ordinal)];
+    }
+
+    /// <summary>
+    /// 这一截连同它前面的笔画，是不是已经把整个词条画在已画串的末尾了。
+    /// 成立时"还差几笔"无从谈起——缺的那几笔本来就该画在这一截前面，而它们已经在输入里。
+    /// </summary>
+    static bool AlreadyDrawn(string input,int start,int tailLength,Occurrence occurrence)
+    {
+        var token=occurrence.Token;
+        // 这一截必须是词条的尾巴，词条才可能整段落在已画串里（已画串到这一截就结束了）
+        if(occurrence.Offset+tailLength!=token.Length) return false;
+        // 词条开头落在输入之前：缺的就是那几笔，接不上去，仍要报出来
+        if(start<occurrence.Offset) return false;
+        // 词条恰好是已画串末尾的那一段
+        return input.AsSpan(start-occurrence.Offset).SequenceEqual(token);
     }
 
     /// <summary>
@@ -633,35 +665,27 @@ class PrefixTrie
         return reachable;
     }
 
-    /// <summary>从 start 起恰好是一个词条的所有结束位置；顺着 trie 走，遇终止节点即命中。</summary>
+    /// <summary>
+    /// 从 start 起恰好是一个词条的所有结束位置；顺着 trie 走，遇终止节点即命中。
+    /// 与建树一样<b>按码位走步</b>：代理对整体当一个字符，落单的代理项判定"此处不成词"。
+    /// 返回的下标是 UTF-16 位置，且一定落在码位边界上，可以直接拿来切 <c>s[i..]</c>。
+    /// </summary>
     IEnumerable<int> ConsumedEnds(string s,int start)
     {
         var node=0;
-        for(var i=start;i<s.Length;i++)
+        var index=start;
+        while(index<s.Length)
         {
-            // 代理对：无法单独构成码位的 char 直接判定"此处不成词"（原实现在这里会抛异常）
-            if(!Rune.TryCreate(s[i],out var rune)||!nodes[node].Next.TryGetValue(rune,out var next))
+            if(!Rune.TryGetRuneAt(s,index,out var rune)||!nodes[node].Next.TryGetValue(rune,out var next))
             {
                 yield break;
             }
             node=next;
+            index+=rune.Utf16SequenceLength;
             if(nodes[node].Terms.Count>0)
             {
-                yield return i+1;
+                yield return index;
             }
-        }
-    }
-
-    /// <summary>收集以 node 为根的子树的全部词条。</summary>
-    void Gather(int node,HashSet<string> into)
-    {
-        foreach(var term in nodes[node].Terms)
-        {
-            into.Add(term);
-        }
-        foreach(var (_,child) in nodes[node].Next)
-        {
-            Gather(child,into);
         }
     }
 }

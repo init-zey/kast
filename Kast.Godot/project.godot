@@ -11,8 +11,13 @@ config_version=5
 [application]
 
 config/name="Kast"
-run/main_scene="uid://dcwwj5qgdygfc"
+config/version="0.1.0"
+run/main_scene="res://MainMenu.tscn"
 config/features=PackedStringArray("4.7", "C#")
+
+[autoload]
+
+Keychain="*uid://cpiqyhq24t3th"
 
 [display]
 
@@ -23,6 +28,14 @@ window/stretch/aspect="expand"
 
 project/assembly_name="kast"
 project/solution_directory=".."
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/ControlsRemap/plugin.cfg", "res://addons/keychain/plugin.cfg")
+
+[gui]
+
+theme/custom="res://Materials/Theme.tres"
 
 [input]
 
@@ -88,12 +101,12 @@ multiselect={
 }
 scroll_down={
 "deadzone": 0.2,
-"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":49,"key_label":0,"unicode":49,"location":0,"echo":false,"script":null)
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":83,"key_label":0,"unicode":115,"location":0,"echo":false,"script":null)
 ]
 }
 scroll_up={
 "deadzone": 0.2,
-"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":51,"key_label":0,"unicode":51,"location":0,"echo":false,"script":null)
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":87,"key_label":0,"unicode":119,"location":0,"echo":false,"script":null)
 ]
 }
 dict_toggle={
@@ -104,7 +117,7 @@ dict_toggle={
 
 [internationalization]
 
-locale/translations=PackedStringArray("res://Localization/strings.en.translation")
+locale/translations=PackedStringArray("res://Localization/strings.en.translation", "res://Localization/strings.zh_CN.translation")
 locale/fallback="zh_CN"
 
 [physics]

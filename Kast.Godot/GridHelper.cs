@@ -1,26 +1,38 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace Kast.Godot;
 
 public static class GridHelper
 {
-    const float SQRT3=1.732050807568877f;
-    static readonly Transform2D Transform=new Transform2D(SQRT3,0,3f/2,SQRT3/2,0,0);
-    public readonly static Dictionary<char,Vector2> Vecs;
     public readonly static Dictionary<char, (int dx, int dy)> Axis;
-    public const string Chars = "wqasde";
-    public static Vector2 CharToVec(char c)
+    public readonly static char[] Chars = "wqasde".ToArray();
+    public readonly static char[] NextAngles = "wqade".ToArray();
+    public static int GetAngle(int angle,char c)
     {
-        return Vecs[c];
+        var a=angle+Array.IndexOf(Chars,c);
+        if(a>=Chars.Length) a-=Chars.Length;
+        return a;
     }
-    public static Rect2 GetRect(IEnumerable<char> pattern)
+    static Vector2 AngleToVec(int angle)
+    {
+        return new(MathF.Cos(angle*MathF.Tau/Chars.Length),MathF.Sin(angle*MathF.Tau/Chars.Length));
+    }
+    public static Vector2 CharToVec(ref int lastAngle,char c)
+    {
+        lastAngle=GetAngle(lastAngle,c);
+        return AngleToVec(lastAngle);
+    }
+    public static Rect2 GetRect(Spell spell)
     {
         var rect=new Rect2();
         var p=new Vector2();
-        foreach(var c in pattern)
+        var a=0;
+        foreach(var c in spell.ToArray())
         {
-            p+=CharToVec(c);
+            p+=CharToVec(ref a,c);
             var dx=rect.Position.X-p.X;
             if(dx>0)
             {
@@ -52,32 +64,45 @@ public static class GridHelper
     }
     public static char AddChar(char a,char b)
     {
-        if(a==' ') return b;
-        return Chars[(Chars.IndexOf(a)+Chars.IndexOf(b))%Chars.Length];
+        if(!IsValid(a))
+        {
+            throw new Exception($"非法字符{a}");
+        }
+        if(!IsValid(b))
+        {
+            throw new Exception($"非法字符{b}");
+        }
+        return Chars[(Array.IndexOf(Chars,a)+Array.IndexOf(Chars,b))%Chars.Length];
     }
     /// <summary>是否是有效的方向字符。</summary>
     public static bool IsValid(char c)
     {
-        return Vecs.ContainsKey(c);
+        return Array.IndexOf(Chars,c)>=0;
     }
     /// <summary>两步是否互为反向（走回头路）。</summary>
     public static bool IsOpposite(char a,char b)
     {
-        return IsValid(a)&&IsValid(b)&&Vecs[a]+Vecs[b]==Vector2.Zero;
+        return IsValid(a)&&IsValid(b)&&MathF.Abs(Array.IndexOf(Chars,a)-Array.IndexOf(Chars,b))==Chars.Length/2;
     }
-    public static (int,int) ExtendPoint(int x, int y,char next)
+    public static (int,int) ExtendAxis((int x, int y) p,int a)
     {
-        var nd = Axis[next];
-        return (x + nd.dx ,y + nd.dy);
+        var nd = Axis[Chars[a]];
+        return (p.x + nd.dx ,p.y + nd.dy);
     }
     /// <summary>
     /// 从 (x,y) 沿 <paramref name="point"/> 方向走出去是否合法：这条边尚未被用过时为 <see langword="true"/>。
     /// 只判边，不判目标顶点是否访问过。
     /// </summary>
-    public static bool CanExtendPoint(HashSet<((int x, int y) a, (int x, int y) b)> edges, int x, int y,(int,int) point)
+    public static bool CanExtendPoint(List<(int,int)> points, (int,int) nextPoint)
     {
-        var newEdge = NormalizeEdge((x, y), point);
-        return !edges.Contains(newEdge);
+        if(points.Count<1) return true;
+        var lastPoint=points[^1];
+        for(int i=1;i<points.Count;i++)
+        {
+            if(points[i-1]==lastPoint&&points[i]==nextPoint) return false;
+            if(points[i-1]==nextPoint&&points[i]==lastPoint) return false;
+        }
+        return true;
     }
 
     public static ((int x, int y) a, (int x, int y) b) NormalizeEdge(
@@ -90,29 +115,24 @@ public static class GridHelper
 
         return (q, p);
     }
+
+    public static IEnumerable<(char,Vector2)> Vecs(int lastAngle)
+    {
+        foreach(var c in Chars)
+        {
+            yield return (c,AngleToVec(GetAngle(lastAngle,c)));
+        }
+    }
+
     static GridHelper()
     {
-        // var up=new Vector2(0,-3);
-        var right=new Vector2(SQRT3,0);
-        var upright=new Vector2(SQRT3*0.5f,-1.5f);
-        Vecs = new()
-        {
-            ['w'] = new(-upright.X,upright.Y),
-            ['q'] = -right,
-            ['a'] = -upright,
-            ['s'] = new(upright.X,-upright.Y),
-            ['d'] = right,
-            ['e'] = upright,
-            // ['w'] = up,
-            // ['x'] = -up,
-        };
         Axis = new()
         {
-            ['w'] = (1, 0),
-            ['q'] = (0, 1),
+            ['w'] = (2, 0),
+            ['q'] = (1, 1),
             ['a'] = (-1, 1),
-            ['s'] = (-1, 0),
-            ['d'] = (0, -1),
+            ['s'] = (-2, 0),
+            ['d'] = (-1, -1),
             ['e'] = (1, -1)
         };
     }

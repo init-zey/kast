@@ -35,4 +35,8 @@ public abstract partial class NObjectType3D : NObjectType
         outlineColor=color;
         Material.SetShaderParameter("outline_color",color);
     }
+    public override void OnSetMass(float prevMass,float newMass)
+    {
+        Scale*=newMass/prevMass;
+    }
 }

@@ -8,6 +8,7 @@ internal class Entry
     private static void Main(string[] args)
     {
         var code=TokenizerTests.Run();
+        code|=NumeralTests.Run();
 
         var alphabet=Alphabet<string>.Load();
         alphabet.AddNoun("你","[你]");

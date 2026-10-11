@@ -14,7 +14,13 @@ public partial class NObject : RigidBody3D
 
     public new void SetMass(float mass)
     {
+        if(mass < 0)
+        {
+            QueueFree();
+        }
+        var prevMass=mass;
         Mass=mass;
+        Type.OnSetMass(prevMass,mass);
         EmitSignal(SignalName.MassChanged,mass);
     }
     public void SetType(string typeid)

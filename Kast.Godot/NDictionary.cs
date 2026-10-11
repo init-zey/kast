@@ -13,7 +13,7 @@ public partial class NDictionary : ScrollContainer
             Helper.LoadScene<NDictEntry>("DictEntry", (n) =>
             {
                 Container.AddChild(n);
-                n.Init(word);
+                n.Init(' ',word);   // 词典里 ' ' 当根旋转：条目自己慢慢转，不跟任何已画出的笔画对齐
             });
         }
     }

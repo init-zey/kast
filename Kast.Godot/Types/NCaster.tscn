@@ -661,21 +661,18 @@ transform = Transform3D(1, 0, 0, 0, 0.9848077, -0.17364818, 0, 0.17364818, 0.984
 mesh = SubResource("ArrayMesh_g4vcl")
 
 [node name="RArm" type="Node3D" parent="blockbench_export/Node/Root" unique_id=698592675]
-transform = Transform3D(1, 0, 0, 0, 0.99241364, 0.122943595, 0, -0.122943595, 0.99241364, -0.1375, 0.1, 0.05)
 
 [node name="cube4" type="MeshInstance3D" parent="blockbench_export/Node/Root/RArm" unique_id=224354742]
 transform = Transform3D(0.98162717, 0.190809, -4.656613e-10, -0.1903442, 0.979236, -0.06975648, -0.013310162, 0.06847486, 0.9975641, -0.03125, -0.11603634, -0.053960796)
 mesh = SubResource("ArrayMesh_si3uf")
 
 [node name="LArm" type="Node3D" parent="blockbench_export/Node/Root" unique_id=991830091]
-transform = Transform3D(1, 0, 0, 0, 0.99241364, -0.122943595, 0, 0.122943595, 0.99241364, -0.0125, 0.0875, 0.03125)
 
 [node name="cube5" type="MeshInstance3D" parent="blockbench_export/Node/Root/LArm" unique_id=336209489]
 transform = Transform3D(0.98162717, -0.190809, 4.656613e-10, 0.1903442, 0.979236, -0.06975648, 0.013310162, 0.06847486, 0.9975641, 0.025, -0.103536345, -0.035210796)
 mesh = SubResource("ArrayMesh_fixq1")
 
 [node name="RFeet" type="Node3D" parent="blockbench_export/Node/Root" unique_id=1207286661]
-transform = Transform3D(1, 0, 0, 0, 0.9999889, -0.004707049, 0, 0.004707049, 0.9999889, -0.07291664, -0.12979905, -0.011534353)
 
 [node name="cube6" type="MeshInstance3D" parent="blockbench_export/Node/Root/RFeet" unique_id=189231481]
 transform = Transform3D(1, 0, 0, 0, 0.97437006, -0.22495106, 0, 0.22495106, 0.97437006, -0.008333357, -0.2251869, -0.046620112)
@@ -694,7 +691,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.008333357, -0.2279988, -0.
 mesh = SubResource("ArrayMesh_dloei")
 
 [node name="LFeet" type="Node3D" parent="blockbench_export/Node/Root" unique_id=610550696]
-transform = Transform3D(1, 0, 0, 0, 0.99777645, -0.06664995, 0, 0.06664995, 0.99777645, -0.08958336, -0.1579199, -0.00509732)
 
 [node name="cube10" type="MeshInstance3D" parent="blockbench_export/Node/Root/LFeet" unique_id=345655327]
 transform = Transform3D(1, 0, 0, 0, 0.97437006, -0.22495106, 0, 0.22495106, 0.97437006, 0.008333357, -0.2251869, -0.046620112)

@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://san3iw3cdipc"]
+
+[ext_resource type="Script" uid="uid://bxmp2vvxsdc7b" path="res://NLevel.cs" id="1_y0prk"]
+[ext_resource type="PackedScene" uid="uid://b8vpff64h5rcw" path="res://Types/NCube.tscn" id="2_0nkm3"]
+[ext_resource type="Script" uid="uid://be1ljychnsoan" path="res://NJointMarker.cs" id="3_0nkm3"]
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_udksl"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_0nkm3"]
+resource_local_to_scene = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_koob3"]
+resource_local_to_scene = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_re5x3"]
+resource_local_to_scene = true
+
+[node name="1" type="Node3D" unique_id=597950244]
+script = ExtResource("1_y0prk")
+
+[node name="Terrain" type="Node3D" parent="." unique_id=1487057568]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.025779724, 0, -0.0056676865)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Terrain" unique_id=1388936459]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain/StaticBody3D" unique_id=327148411]
+shape = SubResource("WorldBoundaryShape3D_udksl")
+
+[node name="Cube" parent="." unique_id=1528775501 instance=ExtResource("2_0nkm3")]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, -6, 5, 3.1847801)
+mesh = SubResource("BoxMesh_0nkm3")
+
+[node name="Cube2" parent="." unique_id=1495402896 instance=ExtResource("2_0nkm3")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 5, 7.18478)
+mesh = SubResource("BoxMesh_koob3")
+
+[node name="Cube3" parent="." unique_id=1966144147 instance=ExtResource("2_0nkm3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 4.18478)
+mesh = SubResource("BoxMesh_re5x3")
+
+[node name="Marker3D" type="Marker3D" parent="." unique_id=945930090]
+script = ExtResource("3_0nkm3")

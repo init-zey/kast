@@ -28,6 +28,7 @@ public static class NLocalization
         (English,"menu.quit","Quit"),
         (English,"menu.back","Back"),
         (English,"menu.empty_slot","No save found"),
+        (English,"menu.broken_save","Save file is corrupted"),
         (English,"menu.save_info","Seed {0} · {1} symbols"),
         // 设置
         (English,"settings.title","Settings"),
@@ -54,6 +55,7 @@ public static class NLocalization
         (Chinese,"menu.quit","退出"),
         (Chinese,"menu.back","返回"),
         (Chinese,"menu.empty_slot","没有找到存档"),
+        (Chinese,"menu.broken_save","存档已损坏"),
         (Chinese,"menu.save_info","世界种子 {0} · 已解锁 {1} 个符号"),
         (Chinese,"settings.title","设置"),
         (Chinese,"settings.language","语言"),
@@ -107,9 +109,9 @@ public static class NLocalization
     }
 
     /// <summary>
-    /// 取 key 对应的文案并做 <see cref="string.Format(string,object[])"/> 占位替换。
+    /// 取 key 对应的文案并做占位替换，例如 <c>Format("menu.save_info",seed,count)</c>。
     /// </summary>
-    public static string Tr(string key,params object[] args)
+    public static string Format(string key,params object[] args)
     {
         return string.Format(Tr(key),args);
     }

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://ds6s8f2t4o76t"]
 
-[ext_resource type="Script" uid="uid://dwo2ogspevw46" path="res://NPlayerCamera.cs" id="1_ckl5i"]
+[ext_resource type="Script" uid="uid://dwo2ogspevw46" path="res://PlayerCamera.cs" id="1_ckl5i"]
 
 [node name="PlayerCamera" type="Node3D" unique_id=730043887 node_paths=PackedStringArray("Camera", "SpringArm")]
 transform = Transform3D(1, 0, 0, 0, 0.89381844, 0.44842908, 0, -0.44842908, 0.89381844, 0, 0, 0)

@@ -1,6 +1,30 @@
-keys,en
-spell_state.empty,Hold RMB
-spell_state.ready,Ready to cast
-spell_state.wrong,Wrong spell
-spell_state.ambiguity,Ambiguous spell
-spell_state.crack,"Cracked"
+keys,en,zh_CN
+spell_state.empty,Hold RMB,按住右键
+spell_state.ready,Ready to cast,可以施法
+spell_state.wrong,Wrong spell,咒语错误
+spell_state.ambiguity,Ambiguous spell,咒语有歧义
+spell_state.crack,Cracked,破碎
+,,
+,,
+menu.continue,Continue,继续游戏
+menu.new_game,New Game,新游戏
+menu.settings,Settings,设置
+menu.quit,Quit,退出
+menu.back,Back,返回
+menu.empty_slot,No save found,没有找到存档
+menu.broken_save,Save file is corrupted,存档已损坏
+menu.save_info,Seed {0} · {1} symbols,"{0},{1}"
+settings.title,Settings,设置
+settings.language,Language,语言
+settings.volume,Master Volume,主音量
+settings.fullscreen,Fullscreen,全屏
+settings.on,On,开
+settings.off,Off,关
+settings.hint,Esc / click Back to save automatically,按 Esc 或点“返回”会自动保存设置
+dialog.ok,OK,确定
+dialog.cancel,Cancel,取消
+dialog.confirm_new_title,Start a new game?,开始新游戏？
+dialog.confirm_new_body,The existing save will be deleted and a new world seed will be generated.,现有存档会被删除，并生成新的世界种子。
+language.en,English,English
+language.zh_CN,简体中文,简体中文
+btn.keybinding,KeyBinding,设置键位

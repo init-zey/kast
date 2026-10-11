@@ -1,8 +1,0 @@
-[gd_resource type="StandardMaterial3D" format=3 uid="uid://fkllug2475w6"]
-
-[resource]
-no_depth_test = true
-shading_mode = 0
-vertex_color_use_as_albedo = true
-use_particle_trails = true
-fov_override = 136.3

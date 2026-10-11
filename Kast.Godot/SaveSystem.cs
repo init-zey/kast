@@ -20,6 +20,9 @@ public static class SaveSystem
     /// <summary>进程内缓存的进度存档，避免每次读盘。</summary>
     public static Progress Current{get;private set;} = null;
 
+    /// <summary>最近一次读档是否因文件损坏而失败；用于让菜单禁用“继续”并给出提示。</summary>
+    public static bool LoadFailed{get;private set;}
+
     /// <summary>是否存在可继续的存档。</summary>
     public static bool HasSave()
     {
@@ -36,6 +39,10 @@ public static class SaveSystem
         {
             return Current;
         }
+        if(LoadFailed)
+        {
+            return null; // 已经确认损坏，不要每次刷新都刷屏报错
+        }
         if(!HasSave())
         {
             return null;
@@ -46,6 +53,7 @@ public static class SaveSystem
             if(file==null)
             {
                 GD.PushError($"读取存档失败：{FileAccess.GetOpenError()}");
+                LoadFailed=true;
                 return null;
             }
             bytes=file.GetBuffer((long)file.GetLength());
@@ -53,11 +61,13 @@ public static class SaveSystem
         try
         {
             Current=MessagePackSerializer.Deserialize<Progress>(bytes,Options);
+            LoadFailed=false;
         }
         catch(Exception e)
         {
             GD.PushError($"存档解析失败：{e.Message}");
             Current=null;
+            LoadFailed=true;
         }
         return Current;
     }
@@ -70,6 +80,7 @@ public static class SaveSystem
             return false;
         }
         Current=progress;
+        LoadFailed=false;
         byte[] bytes;
         try
         {
@@ -94,6 +105,7 @@ public static class SaveSystem
     public static void DeleteSave()
     {
         Current=null;
+        LoadFailed=false;
         if(!HasSave())
         {
             return;

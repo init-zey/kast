@@ -1,8 +1,28 @@
 [gd_scene format=3 uid="uid://c8nqm3v1kha7e"]
 
-[ext_resource type="Script" uid="uid://b7xkd4m2pqv9s" path="res://NMainMenu.cs" id="1_menu"]
+[ext_resource type="Script" uid="uid://b7xkd4m2pqwas" path="res://NMainMenu.cs" id="1_menu"]
 
-[node name="MainMenu" type="Control"]
+[sub_resource type="Gradient" id="Gradient_backdrop"]
+colors = PackedColorArray(0.05, 0.06, 0.09, 1, 0.01, 0.01, 0.02, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_backdrop"]
+gradient = SubResource("Gradient_backdrop")
+height = 512
+fill_from = Vector2(0.5, 0)
+fill_to = Vector2(0.5, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 32.0
+content_margin_top = 28.0
+content_margin_right = 32.0
+content_margin_bottom = 28.0
+bg_color = Color(0.09, 0.1, 0.14, 0.94)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="MainMenu" type="Control" unique_id=932772019 node_paths=PackedStringArray("MenuPanel", "ContinueButton", "NewGameButton", "SettingsButton", "QuitButton", "SaveInfoLabel", "SettingsPanel", "LanguageButton", "VolumeSlider", "VolumeValueLabel", "FullscreenButton", "BackButton", "VersionLabel", "ConfirmNewDialog")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -10,3 +30,206 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
+MenuPanel = NodePath("Root/MenuPanel")
+ContinueButton = NodePath("Root/MenuPanel/ContinueButton")
+NewGameButton = NodePath("Root/MenuPanel/NewGameButton")
+SettingsButton = NodePath("Root/MenuPanel/SettingsButton")
+QuitButton = NodePath("Root/MenuPanel/QuitButton")
+SaveInfoLabel = NodePath("Root/MenuPanel/SaveInfoLabel")
+SettingsPanel = NodePath("Root/SettingsPanel")
+LanguageButton = NodePath("Root/SettingsPanel/Box/LanguageRow/LanguageButton")
+VolumeSlider = NodePath("Root/SettingsPanel/Box/VolumeRow/VolumeSlider")
+VolumeValueLabel = NodePath("Root/SettingsPanel/Box/VolumeRow/VolumeValueLabel")
+FullscreenButton = NodePath("Root/SettingsPanel/Box/FullscreenRow/FullscreenButton")
+BackButton = NodePath("Root/SettingsPanel/Box/BackButton")
+VersionLabel = NodePath("VersionLabel")
+ConfirmNewDialog = NodePath("ConfirmNewDialog")
+
+[node name="Backdrop" type="TextureRect" parent="." unique_id=848378410]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_backdrop")
+
+[node name="Root" type="VBoxContainer" parent="." unique_id=844134383]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="MenuPanel" type="VBoxContainer" parent="Root" unique_id=2143687569]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 10
+
+[node name="Spacer" type="Control" parent="Root/MenuPanel" unique_id=536949329]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+
+[node name="ContinueButton" type="Button" parent="Root/MenuPanel" unique_id=1893517153]
+custom_minimum_size = Vector2(300, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "menu.continue"
+metadata/text_key = "menu.continue"
+
+[node name="SaveInfoLabel" type="Label" parent="Root/MenuPanel" unique_id=634675856]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.65, 0.72, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="NewGameButton" type="Button" parent="Root/MenuPanel" unique_id=1894901760]
+custom_minimum_size = Vector2(300, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "menu.new_game"
+metadata/text_key = "menu.new_game"
+
+[node name="SettingsButton" type="Button" parent="Root/MenuPanel" unique_id=364801591]
+custom_minimum_size = Vector2(300, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "menu.settings"
+metadata/text_key = "menu.settings"
+
+[node name="QuitButton" type="Button" parent="Root/MenuPanel" unique_id=101233698]
+custom_minimum_size = Vector2(300, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "menu.quit"
+metadata/text_key = "menu.quit"
+
+[node name="SettingsPanel" type="PanelContainer" parent="Root" unique_id=927763471]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Box" type="VBoxContainer" parent="Root/SettingsPanel" unique_id=1449721296]
+custom_minimum_size = Vector2(460, 0)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="SettingsTitle" type="Label" parent="Root/SettingsPanel/Box" unique_id=2142174261]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 26
+text = "settings.title"
+horizontal_alignment = 1
+metadata/text_key = "settings.title"
+
+[node name="Separator" type="HSeparator" parent="Root/SettingsPanel/Box" unique_id=880250]
+layout_mode = 2
+
+[node name="LanguageRow" type="HBoxContainer" parent="Root/SettingsPanel/Box" unique_id=1424232822]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LanguageLabel" type="Label" parent="Root/SettingsPanel/Box/LanguageRow" unique_id=1568733443]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "settings.language"
+vertical_alignment = 1
+metadata/text_key = "settings.language"
+
+[node name="LanguageButton" type="Button" parent="Root/SettingsPanel/Box/LanguageRow" unique_id=460179782]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+
+[node name="VolumeRow" type="HBoxContainer" parent="Root/SettingsPanel/Box" unique_id=955002870]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="VolumeLabel" type="Label" parent="Root/SettingsPanel/Box/VolumeRow" unique_id=1237752403]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "settings.volume"
+vertical_alignment = 1
+metadata/text_key = "settings.volume"
+
+[node name="VolumeSlider" type="HSlider" parent="Root/SettingsPanel/Box/VolumeRow" unique_id=610652262]
+custom_minimum_size = Vector2(180, 24)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="VolumeValueLabel" type="Label" parent="Root/SettingsPanel/Box/VolumeRow" unique_id=843314107]
+custom_minimum_size = Vector2(52, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.65, 0.72, 1)
+theme_override_font_sizes/font_size = 16
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="FullscreenRow" type="HBoxContainer" parent="Root/SettingsPanel/Box" unique_id=797535768]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="FullscreenLabel" type="Label" parent="Root/SettingsPanel/Box/FullscreenRow" unique_id=405986776]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "settings.fullscreen"
+vertical_alignment = 1
+metadata/text_key = "settings.fullscreen"
+
+[node name="FullscreenButton" type="Button" parent="Root/SettingsPanel/Box/FullscreenRow" unique_id=467768484]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+
+[node name="Hint" type="Label" parent="Root/SettingsPanel/Box" unique_id=691987566]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.65, 0.72, 1)
+theme_override_font_sizes/font_size = 14
+text = "settings.hint"
+horizontal_alignment = 1
+autowrap_mode = 3
+metadata/text_key = "settings.hint"
+
+[node name="BackButton" type="Button" parent="Root/SettingsPanel/Box" unique_id=549219590]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "menu.back"
+metadata/text_key = "menu.back"
+
+[node name="VersionLabel" type="Label" parent="." unique_id=2104762249]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -30.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.62, 0.65, 0.72, 1)
+theme_override_font_sizes/font_size = 14
+text = "0.1.0"
+
+[node name="ConfirmNewDialog" type="ConfirmationDialog" parent="." unique_id=604849412]
+title = "dialog.confirm_new_title"
+size = Vector2i(420, 160)
+ok_button_text = "dialog.ok"
+dialog_text = "dialog.confirm_new_body"
+cancel_button_text = "dialog.cancel"

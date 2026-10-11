@@ -9,4 +9,6 @@ public class Progress
     public int Seed;
     [Key(1)]
     public string[] UnlockedSymbols;
+    [Key(2)]
+    public string LevelID;
 }

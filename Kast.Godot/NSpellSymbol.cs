@@ -1,26 +1,24 @@
-using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using Godot;
 using Kast.Godot;
 
 public partial class NSpellSymbol : Control
 {
-    public IEnumerable<char> Spell=null;
+    public Spell Spell=null;
     public Vector2 Origin;
     [Export] public float EdgeLength=-1;
     [Export] public float EdgeWidth=4;
     double t;
     readonly float[] Curve;
-    public void SetSpell(IEnumerable<char> spell)
+    public void SetSpell(Spell spell)
     {
         Spell=spell;
         QueueRedraw();
     }
     public override void _Draw()
     {
-        if(Spell==null||!Spell.Any()) return;
+        if(Spell==null||!Spell.HasFirstDir) return;
         var points = new List<Vector2>();
         var tail = new Vector2();
         var rect = GridHelper.GetRect(Spell);
@@ -39,16 +37,17 @@ public partial class NSpellSymbol : Control
             }
         }
         var o=rect.GetCenter()-Size/2/s;
-        foreach(var c in Spell)
+        var a=0;
+        foreach(var c in Spell.ToArray())
         {
             var p=PlacePoint(tail, o, s);
             ExtendCurve(points, p,ref k);
             DrawCircle(p,EdgeWidth*(0.5f+w),Colors.White);
-            w*=0.8f;
-            tail += GridHelper.CharToVec(c);
+            w*=0.6f;
+            tail += GridHelper.CharToVec(ref a,c);
         }
         ExtendCurve(points, PlacePoint(tail, o, s),ref k);
-        DrawPolyline(points.ToArray(), Colors.White, EdgeWidth);
+        DrawPolyline(points.ToArray(), new Color(1,1,1,0.8f), EdgeWidth);
     }
 
     private void ExtendCurve(List<Vector2> points, Vector2 point,ref float k)
@@ -80,7 +79,12 @@ public partial class NSpellSymbol : Control
 
     public override void _PhysicsProcess(double delta)
     {
+        if(Spell==null) return;
         t+=delta;
+        if(Spell.FirstDir==' ')
+        {
+            Rotation += (float)delta*0.1f;
+        }
         QueueRedraw();
     }
 
@@ -88,6 +92,7 @@ public partial class NSpellSymbol : Control
 
     public override void _Ready()
     {
+        PivotOffsetRatio=new(0.5f,0.5f);
     }
     public NSpellSymbol()
     {

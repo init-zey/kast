@@ -3,8 +3,7 @@ using Godot;
 
 namespace Kast.Godot;
 
-[GlobalClass]
-public partial class ClientWorld : Node3D
+public partial class NLevel : Node3D
 {
     public HashSet<NObject> Objects=new();
     public NObject Player;
@@ -19,21 +18,31 @@ public partial class ClientWorld : Node3D
         obj.SetMass(mass);
         return obj;
     }
+    public override void _EnterTree()
+    {
+        ScanAndSpawn(this);
+    }
     public override void _Ready()
     {
         Camera = Helper.LoadScene<PlayerCamera>("PlayerCamera");
         AddChild(Camera);
-        Player = Spawn("Caster", Transform3D.Identity, 1);
+        Player = Spawn("NCaster", Transform3D.Identity, 1);
         Camera.Player = Player;
-        ((NCaster)Player.Type).camera = Camera;
         NGame.Instance.ActiveCamera = Camera;
-        Spawn("Cube", At("Obstacle1"), 10);
-        Spawn("Cube", At("Obstacle2"), 10);
-        Spawn("Cube", At("Obstacle3"), 10);
+        NGame.Instance.SpellSlots.SetCaster((NCaster)Player.Type);
     }
 
-    private Transform3D At(string label)
+    private void ScanAndSpawn(Node root)
     {
-        return GetNode<Node3D>($"%{label}").GlobalTransform;
+        foreach(var child in root.GetChildren())
+        {
+            ScanAndSpawn(child);
+            if(child is NObjectType objType)
+            {
+                var aabbSize=objType.Scale;
+                Spawn(objType.GetType().Name,objType.Transform,objType.Density*aabbSize.Dot(aabbSize));
+                objType.QueueFree();
+            }
+        }
     }
 }

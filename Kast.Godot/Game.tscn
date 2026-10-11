@@ -2,14 +2,15 @@
 
 [ext_resource type="Script" uid="uid://cshdmowwc0bp0" path="res://NGame.cs" id="1_wbfu4"]
 [ext_resource type="Script" uid="uid://bh8j0j0buymt6" path="res://NHud.cs" id="2_3mrqo"]
+[ext_resource type="Theme" uid="uid://ct5hn2vq8kwmb" path="res://Materials/Theme.tres" id="2_gwjdr"]
 [ext_resource type="Script" uid="uid://bvbw2i37y1im3" path="res://NSpellSymbol.cs" id="3_joorw"]
 [ext_resource type="Shader" uid="uid://c21kh3iurokpy" path="res://Shaders/HexGrid.gdshader" id="4_2vekm"]
-[ext_resource type="Script" uid="uid://6a3e3vahcsjd" path="res://ClientWorld.cs" id="4_t88pq"]
 [ext_resource type="Script" uid="uid://bk4p1ymfeaweu" path="res://NSpellInput.cs" id="5_yx171"]
 [ext_resource type="Script" uid="uid://deipnfgtk1xiu" path="res://NPredictionsContainer.cs" id="6_joorw"]
 [ext_resource type="Script" uid="uid://0sxeiiy0q0cv" path="res://NDictionary.cs" id="7_2vekm"]
 [ext_resource type="PackedScene" uid="uid://bq7k3m2v8xr4t" path="res://SpellSlots.tscn" id="8_yx171"]
-[ext_resource type="Material" uid="uid://fkllug2475w6" path="res://Materials/SpellParticleMaterial.tres" id="9_2vekm"]
+[ext_resource type="Script" uid="uid://crsc18t17afto" path="res://keybinding_button.gd" id="10_yhmtn"]
+[ext_resource type="PackedScene" uid="uid://bq7ibhm0txl5p" path="res://addons/keychain/ShortcutEdit.tscn" id="10_yx171"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_yfxq2"]
 
@@ -27,8 +28,6 @@ shader_parameter/bg_color = Color(0, 0, 0, 0.40784314)
 shader_parameter/node_size = Vector2(1152, 648)
 shader_parameter/offset = Vector2(0, 0)
 shader_parameter/hex_size = 20.0
-
-[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_udksl"]
 
 [sub_resource type="Curve" id="Curve_2vekm"]
 _data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.7313144, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
@@ -50,15 +49,22 @@ scale_curve = SubResource("CurveTexture_2vekm")
 _data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.50373936, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 3
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yhmtn"]
+no_depth_test = true
+shading_mode = 0
+vertex_color_use_as_albedo = true
+use_particle_trails = true
+fov_override = 136.3
+
 [sub_resource type="RibbonTrailMesh" id="RibbonTrailMesh_joorw"]
-material = ExtResource("9_2vekm")
+material = SubResource("StandardMaterial3D_yhmtn")
 size = 0.1
 curve = SubResource("Curve_yx171")
 
-[node name="Game" type="Node3D" unique_id=985482374 node_paths=PackedStringArray("ClientWorld", "Particles")]
+[node name="Game" type="Node3D" unique_id=985482374 node_paths=PackedStringArray("Particles", "SpellSlots")]
 script = ExtResource("1_wbfu4")
-ClientWorld = NodePath("ClientWorld")
 Particles = NodePath("Particles")
+SpellSlots = NodePath("Hud/SpellSlots")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1425891386]
 environment = SubResource("Environment_udksl")
@@ -66,7 +72,7 @@ environment = SubResource("Environment_udksl")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment" unique_id=1269142096]
 transform = Transform3D(1, 0, 0, 0, 0.36745244, 0.9300423, 0, -0.9300423, 0.36745244, 0, 0, 0)
 
-[node name="Hud" type="Control" parent="." unique_id=1947709548 node_paths=PackedStringArray("SpellInput", "StateLabel")]
+[node name="Hud" type="Control" parent="." unique_id=1947709548 node_paths=PackedStringArray("SpellInput", "SpellSymbol")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -74,33 +80,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme = ExtResource("2_gwjdr")
 script = ExtResource("2_3mrqo")
 SpellInput = NodePath("SpellInput")
-StateLabel = NodePath("SpellStateLabel")
-
-[node name="SpellStateLabel" type="Label" parent="Hud" unique_id=396885643]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -60.0
-offset_top = -48.0
-offset_right = 60.0
-offset_bottom = -24.0
-grow_horizontal = 2
-grow_vertical = 0
-text = "spell_state.empty"
-horizontal_alignment = 1
+SpellSymbol = NodePath("SpellInput/SpellSymbol")
 
 [node name="SpellSlots" parent="Hud" unique_id=1759444355 instance=ExtResource("8_yx171")]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
-offset_top = -67.0
-offset_bottom = -67.0
 grow_vertical = 0
 
 [node name="SpellInput" type="ColorRect" parent="Hud" unique_id=1599956433 node_paths=PackedStringArray("Symbol", "Predictions", "Transcript")]
@@ -141,18 +129,20 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("3_joorw")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Hud/SpellInput" unique_id=368339068]
+[node name="ScrollContainer" type="ScrollContainer" parent="Hud/SpellInput" unique_id=368339068 node_paths=PackedStringArray("PredictionsContainer")]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
 grow_vertical = 2
+scroll_hint_mode = 1
 script = ExtResource("6_joorw")
+PredictionsContainer = NodePath("Predictions")
 
 [node name="Predictions" type="VBoxContainer" parent="Hud/SpellInput/ScrollContainer" unique_id=1074905734]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 6
+size_flags_vertical = 2
 
 [node name="DisplayLabel" type="Label" parent="Hud" unique_id=2041526160]
 unique_name_in_owner = true
@@ -172,50 +162,16 @@ horizontal_scroll_mode = 0
 script = ExtResource("7_2vekm")
 Container = NodePath("PanelContainer/FlowContainer")
 
-[node name="PanelContainer" type="PanelContainer" parent="Hud/Dictionary" unique_id=260873352]
+[node name="PanelContainer" type="PanelContainer" parent="Hud/Dictionary" unique_id=1603871244]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="FlowContainer" type="FlowContainer" parent="Hud/Dictionary/PanelContainer" unique_id=1160716709]
 layout_mode = 2
-size_flags_horizontal = 6
+size_flags_horizontal = 3
 size_flags_vertical = 6
-vertical = true
-
-[node name="ClientWorld" type="Node3D" parent="." unique_id=1346424132]
-script = ExtResource("4_t88pq")
-metadata/_custom_type_script = "uid://6a3e3vahcsjd"
-
-[node name="Terrain" type="Node3D" parent="ClientWorld" unique_id=227222819]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.025779724, 0, -0.0056676865)
-
-[node name="StaticBody3D" type="StaticBody3D" parent="ClientWorld/Terrain" unique_id=1822347008]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="ClientWorld/Terrain/StaticBody3D" unique_id=606934604]
-shape = SubResource("WorldBoundaryShape3D_udksl")
-
-[node name="CSGBox3D2" type="CSGBox3D" parent="ClientWorld/Terrain" unique_id=449090592]
-transform = Transform3D(0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, 0.70710677, -0.97182846, 2.5992231, -3.638857)
-use_collision = true
-size = Vector3(6.916504, 5.2667236, 1)
-
-[node name="CSGBox3D3" type="CSGBox3D" parent="ClientWorld/Terrain" unique_id=1361971568]
-transform = Transform3D(0.99854404, 0, -0.053941905, 0, 1, 0, 0.053941905, 0, 0.99854404, 0.95046806, 2.696391, 4.590129)
-use_collision = true
-size = Vector3(1, 5.4610596, 7.284668)
-
-[node name="Obstacle1" type="Marker3D" parent="ClientWorld/Terrain" unique_id=859124085]
-unique_name_in_owner = true
-transform = Transform3D(0.103515, 0, -0.994628, 0, 1, 0, 0.994628, 0, 0.103515, 1.1199715, 0.46586144, -0.32944345)
-
-[node name="Obstacle2" type="Marker3D" parent="ClientWorld/Terrain" unique_id=1955927710]
-unique_name_in_owner = true
-transform = Transform3D(-0.065688804, 0, -0.9978402, 0, 1, 0, 0.9978402, 0, -0.065688804, 1.1199715, 0.46586144, 0.44968498)
-
-[node name="Obstacle3" type="Marker3D" parent="ClientWorld/Terrain" unique_id=693367596]
-unique_name_in_owner = true
-transform = Transform3D(0.112159915, 0, -0.99369025, 0, 1, 0, 0.99369025, 0, 0.112159915, 2.439546, 0.46586144, -0.18056214)
+alignment = 1
 
 [node name="Particles" type="GPUParticles3D" parent="." unique_id=413402243]
 emitting = false
@@ -224,3 +180,24 @@ lifetime = 2.0
 trail_enabled = true
 process_material = SubResource("ParticleProcessMaterial_yx171")
 draw_pass_1 = SubResource("RibbonTrailMesh_joorw")
+
+[node name="KeybindingButton" type="Button" parent="." unique_id=1418855485]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -124.0
+offset_bottom = 31.0
+grow_horizontal = 0
+text = "btn.keybinding"
+script = ExtResource("10_yhmtn")
+
+[node name="Keybinding" type="AcceptDialog" parent="." unique_id=660606740]
+oversampling_override = 1.0
+position = Vector2i(0, 36)
+size = Vector2i(1000, 500)
+
+[node name="ShortcutEdit" parent="Keybinding" unique_id=343459583 instance=ExtResource("10_yx171")]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -49.0
