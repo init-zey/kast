@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://b8vpff64h5rcw"]
+
+[ext_resource type="Script" uid="uid://74255ms5kif2" path="res://Types/NCube.cs" id="1_rm4hj"]
+[ext_resource type="Script" uid="uid://8c32n2kt41jg" path="res://Types/NMassLabel.cs" id="2_roc7o"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_udksl"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_udksl"]
+resource_local_to_scene = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ll43v"]
+
+[node name="Cube" type="CollisionShape3D" unique_id=1528775501]
+shape = SubResource("BoxShape3D_udksl")
+script = ExtResource("1_rm4hj")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1891264718]
+mesh = SubResource("BoxMesh_udksl")
+surface_material_override/0 = SubResource("StandardMaterial3D_ll43v")
+
+[node name="Label3D" type="Label3D" parent="." unique_id=1313326872]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.5102225)
+modulate = Color(0, 0, 0, 1)
+text = "kg"
+font_size = 64
+outline_size = 0
+script = ExtResource("2_roc7o")

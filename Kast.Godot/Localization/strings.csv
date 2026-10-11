@@ -1,0 +1,6 @@
+keys,en
+spell_state.empty,Hold RMB
+spell_state.ready,Ready to cast
+spell_state.wrong,Wrong spell
+spell_state.ambiguity,Ambiguous spell
+spell_state.crack,"Cracked"

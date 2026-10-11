@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://dv2gbuo0rwxx2"]
+
+[sub_resource type="CSharpScript" id="CSharpScript_olg8p"]
+script/source = "using Godot;
+
+public partial class NSpell : HBoxContainer
+{
+    [Export] public LineEdit LineEdit;
+    [Export] public Button CompileButton;
+    [Export] public Label StateLabel;
+}
+"
+
+[node name="Spell" type="HBoxContainer" unique_id=461758759]
+offset_right = 69.0
+offset_bottom = 31.0
+script = SubResource("CSharpScript_olg8p")
+
+[node name="LineEdit" type="LineEdit" parent="." unique_id=504681426]
+layout_mode = 2
+alignment = 1
+expand_to_text_length = true
+
+[node name="Button" type="Button" parent="." unique_id=569522791]
+layout_mode = 2
+text = "btn.compile"
+
+[node name="StateLabel" type="Label" parent="." unique_id=396885643]
+layout_mode = 2

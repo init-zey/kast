@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://fhj6nsrrcqmy"]
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_udksl"]
+
+[node name="Terrain" type="Node3D" unique_id=227222819]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1822347008]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=606934604]
+shape = SubResource("WorldBoundaryShape3D_udksl")
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=449090592]
+transform = Transform3D(0.70710677, 0, -0.70710677, 0, 1, 0, 0.70710677, 0, 0.70710677, -0.97182846, 2.5992231, -3.638857)
+use_collision = true
+size = Vector3(6.916504, 5.2667236, 1)
+
+[node name="CSGBox3D3" type="CSGBox3D" parent="." unique_id=1361971568]
+transform = Transform3D(0.99854404, 0, -0.053941905, 0, 1, 0, 0.053941905, 0, 0.99854404, 0.95046806, 2.696391, 4.590129)
+use_collision = true
+size = Vector3(1, 5.4610596, 7.284668)
+
+[node name="Obstacle1" type="Marker3D" parent="." unique_id=859124085]
+unique_name_in_owner = true
+transform = Transform3D(0.9673891, 0, 0.2532954, 0, 1, 0, -0.2532954, 0, 0.9673891, 1.1199715, 0.46586144, -0.32944345)
+
+[node name="Obstacle2" type="Marker3D" parent="." unique_id=1955927710]
+unique_name_in_owner = true
+transform = Transform3D(0.99854404, 0, -0.053941905, 0, 1, 0, 0.053941905, 0, 0.99854404, 1.1199715, 0.46586144, 0.44968498)
+
+[node name="Obstacle3" type="Marker3D" parent="." unique_id=693367596]
+unique_name_in_owner = true
+transform = Transform3D(0.99854404, 0, -0.053941905, 0, 1, 0, 0.053941905, 0, 0.99854404, 2.439546, 0.46586144, -0.18056214)
