@@ -26,7 +26,7 @@ sky = SubResource("Sky_d20mp")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_u6ohr"]
 shader = ExtResource("4_2vekm")
 shader_parameter/fg_color = Color(1, 1, 1, 1)
-shader_parameter/bg_color = Color(0, 0, 0, 0.40784314)
+shader_parameter/bg_color = Color(0, 0, 0, 0.21568628)
 shader_parameter/node_size = Vector2(1024, 768)
 shader_parameter/offset = Vector2(0, 0)
 shader_parameter/hex_size = 20.0
@@ -239,6 +239,7 @@ draw_pass_1 = SubResource("RibbonTrailMesh_joorw")
 
 [node name="PauseMenu" type="Control" parent="." unique_id=660606740 node_paths=PackedStringArray("PausePanel", "ResumeButton", "KeybindingButton", "QuitButton", "QuitConfirm")]
 process_mode = 3
+visible = false
 texture_filter = 1
 layout_mode = 3
 anchors_preset = 15
