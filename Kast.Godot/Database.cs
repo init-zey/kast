@@ -138,6 +138,27 @@ public class Database(int seed)
             "两两互不为前缀 ⇒ 某一层的词形一旦被全部占用，更长的词形都会因为以它为前缀而失效，"+
             "整个词表随之冻结；请减少短词形的词条数，或给这些词更大的 minLength");
     }
+    /// <summary>
+    /// 一次分配一对互为镜像的词形（例如"天"与"地"），返回 <c>(词形, 镜像)</c>。
+    /// </summary>
+    /// <remarks>
+    /// 只在 <paramref name="real1"/> 上跑一次 <see cref="Gen"/>，<paramref name="real2"/> 取它的
+    /// <see cref="GridHelper.Flip(string)"/> 镜像——两个字于是共用同一份"形状"，只是手性相反。
+    /// <para>
+    /// 镜像同样要登记进 <see cref="used"/>：前缀树的键是<b>逐字符 Flip</b> 后的路径，
+    /// 词形 t 落在键 <c>Flip(t)</c> 上，而它的镜像 Flip(t) 落在键 <c>t</c> 上，两者<b>不是</b>同一条路径。
+    /// 所以只 Add 一次并不能覆盖镜像的子树；漏掉它，后续就可能分配出"以镜像为前缀"的词形，
+    /// 破坏两两互不为前缀这个分词前提。
+    /// </para>
+    /// </remarks>
+    public (string token,string flipped) PairGen(string real1,string real2,int length)
+    {
+        var token=Gen(real1,length);
+        var flipped=GridHelper.Flip(token);
+        Translation.RegisterRealToGame(real2,flipped);
+        used.Add(flipped);
+        return (token,flipped);
+    }
 
     /// <summary>长度为 <paramref name="length"/> 的候选词形总数：首步 6 选，之后每步 5 选。</summary>
     static long Total(int length)
@@ -239,10 +260,13 @@ public class Database(int seed)
     /// 冲突 = 已被占用，或与某个已用词形互为前缀（任一方向）。
     /// </summary>
     /// <remarks>
-    /// 走路径时字符一律先过 <see cref="GridHelper.Flip"/>：词形与它的镜像视为同一个词
-    /// （"天"与"地"就是一对手性相反的词，见 <c>KastAlphabet.Words</c>），
-    /// 所以只登记其中一侧即可。注意必须是 <see cref="GridHelper.Flip"/> 这种对合，
-    /// 不能用多对一的投影，否则会把无关词形也并在一起、白白吃掉词表容量。
+    /// 走路径时字符一律先过 <see cref="GridHelper.Flip"/>。这样做把"词形与它的镜像应当互不冲突"
+    /// 变成了"两者恰好落在互为镜像的两条路径上"——<b>它们仍然是两条不同的路径</b>，
+    /// 所以词形与镜像必须各 Add 一次（见 <see cref="PairGen"/>），只登记一侧会漏掉镜像的整棵子树。
+    /// <para>
+    /// 归一化必须是 <see cref="GridHelper.Flip"/> 这种<b>对合</b>，不能用多对一的投影：
+    /// 投影会把无关词形并到一起，白白吃掉词表容量（实测 3 笔词形能从 123 个压到 26 个）。
+    /// </para>
     /// </remarks>
     sealed class PrefixTrie
     {

@@ -24,10 +24,8 @@ public partial class KastAlphabet
         //
         // 地取"天"的镜像词形（Flip 是 q↔e、a↔d 的对合）：两个字在语义上一对相反
         // （上/下、轻/重、0/1），画面上也就成一对手性相反的图形。
-        // 前缀树按 Flip 归一化，所以词形与镜像被视为同一个词，只需登记一次。
-        var sky=db.Gen("sky/air",4);
-        var earth=GridHelper.Flip(sky);
-        db.Translation.RegisterRealToGame("earth/solid",earth);
+        // PairGen 会同时把两个词形登记进翻译表与前缀树，缺一不可。
+        var (sky,earth)=db.PairGen("sky/air", "earth/solid", 4);
         RegisterBitWord(sky,(ctx) =>
         {
             if(ctx.GetFlag("#bit")) return 0;
