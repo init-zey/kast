@@ -199,7 +199,8 @@ public partial class NMainMenu : Control
             Seed=0,
             // Seed=(int)(GD.Randi()&0x7FFFFFFF),
             PlayerTranslation=new(),
-            LevelID="1"
+            LevelID="1",
+            CasterSpells=[]
         };
         SaveSystem.SaveProgress();
         GetTree().ChangeSceneToFile(GameScene);

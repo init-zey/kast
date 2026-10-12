@@ -23,4 +23,10 @@ public class Progress
     /// <summary>当前关卡 ID，对应 <c>Levels/{ID}.tscn</c>。</summary>
     [Key(2)]
     public string LevelID;
+    /// <summary>
+    /// 施法者的九个咒语槽。开局为空时由 <see cref="NGame.LoadProgress"/> 填入初始咒语；
+    /// 之后随玩家编辑一并保存，重进游戏能接着用上次画好的咒语。
+    /// </summary>
+    [Key(3)]
+    public Spell[] CasterSpells;
 }

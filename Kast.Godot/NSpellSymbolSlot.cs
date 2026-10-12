@@ -22,8 +22,6 @@ public partial class NSpellSymbolSlot : PanelContainer
     public static Color ActiveBorder=new(1f,1f,0f,0.8f);
     /// <summary>槽里显示的词形。</summary>
     public required NSpellSymbol Symbol;
-    /// <summary>本槽是"咒语"还是"整句"，决定输入时的解析方式。</summary>
-    public required SlotType SlotType;
     /// <summary>本槽所绑定的翻译表（词典编辑期间可能是副本，见 <see cref="GameTranslation.Copy"/>）。</summary>
     public required GameTranslation Translation;
     /// <summary>本槽独立的样式实例；每个槽要能各自改描边，所以从资源复制一份。</summary>
@@ -49,13 +47,4 @@ public partial class NSpellSymbolSlot : PanelContainer
         PanelStyle.BgColor=ActiveFill;
     }
 
-}
-
-/// <summary>槽位内容的种类。</summary>
-public enum SlotType
-{
-    /// <summary>单个词（词典条目用）。</summary>
-    Token,
-    /// <summary>整句咒语（九个快捷槽用）。</summary>
-    Sentence
 }

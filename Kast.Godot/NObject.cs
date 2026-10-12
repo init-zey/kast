@@ -81,13 +81,14 @@ public partial class NObject : RigidBody3D
     {
         ParticleAttractor=new();
         ParticleAttractor.Radius=100;
+        ParticleAttractor.Strength=0;
         AddChild(ParticleAttractor);
     }
 
     public void EnableAttractor()
     {
-        ParticleAttractor.Strength=32;
-        attractorEnableTimer=0.1;
+        ParticleAttractor.Strength=10;
+        attractorEnableTimer=0.5;
     }
 
     public override void _PhysicsProcess(double delta)

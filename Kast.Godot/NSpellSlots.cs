@@ -29,7 +29,6 @@ public partial class NSpellSlots : Control
         var slot=new NSpellSymbolSlot
         {
             Symbol=symbol,
-            SlotType=SlotType.Sentence,
             CustomMinimumSize=size,
             Translation=SaveSystem.Current.PlayerTranslation
         };

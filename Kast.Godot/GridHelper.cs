@@ -16,7 +16,7 @@ public static class GridHelper
         if(a>=Chars.Length) a-=Chars.Length;
         return a;
     }
-    static Vector2 AngleToVec(int angle)
+    public static Vector2 AngleToVec(int angle)
     {
         return new(MathF.Cos(angle*MathF.Tau/Chars.Length),MathF.Sin(angle*MathF.Tau/Chars.Length));
     }

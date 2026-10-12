@@ -20,4 +20,9 @@ public abstract partial class NObjectType : Node3D
     
     /// <summary>质量变化的回调，供子类调整外观；默认什么都不做。</summary>
     public virtual void OnSetMass(float prevMass,float newMass) {}
+    /// <summary>
+    /// 本类型用于"显示"咒语的真实词名列表，由 <c>display</c> 动词逐词拼成词形画到界面上。
+    /// 子类覆写以展示自己的名字。
+    /// </summary>
+    public virtual string[] GetDisplayRealName()=>["thing"];
 }

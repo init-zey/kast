@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Godot;
 using Kast.Godot;
 using Kast.Core;
+using System;
 
 /// <summary>
 /// 施法者：只持有一份自己的咒语槽数据。移动、动画、选中等控制逻辑都在 PlayerCamera 里。
@@ -9,18 +10,7 @@ using Kast.Core;
 public partial class NCaster : NObjectType3D
 {
     /// <summary>九个快捷槽里的咒语输入。</summary>
-    public Spell[] Spells=
-    [
-        new(),
-        new(),
-        new(),
-        new(),
-        new(),
-        new(),
-        new(),
-        new(),
-        new()
-    ];
+    public Spell[] Spells;
 
     [Export] public AnimationTree AnimationTree;
 
@@ -87,4 +77,5 @@ public partial class NCaster : NObjectType3D
         }
         return SpellInputAccept;
     }
+    public override string[] GetDisplayRealName() => ["cast","thing"];
 }

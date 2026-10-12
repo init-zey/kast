@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -66,14 +67,24 @@ public partial class NSpellInput : ColorRect
                 Symbol.Spell=Result;
                 Modulate=Colors.White;
                 Accumulate=new();
-                Result.Clear();
                 Helper.ClearChild(Predictions);
                 PredictionItems.Clear();
                 Origin=-mouse.Position;
                 TailAngles.Clear();
-                // AxisPoints.Clear();
-                // AxisPoints.Add((0,0));
                 QueueRedraw();
+
+                var angle=Array.IndexOf(GridHelper.Chars, Result.FirstDir);
+                TailAngles.Add(angle);
+                var vec=GridHelper.AngleToVec(angle);
+                foreach(var ch in Result.Angles)
+                {
+                    Prediction.PushChar(ch);
+                    angle=GridHelper.GetAngle(angle,ch);
+                    vec=GridHelper.AngleToVec(angle);
+                }
+                UpdateTranscript();
+                UpdatePredictions();
+                SetOrigin(Origin+Accumulate);
             }
         }
     }
@@ -136,14 +147,9 @@ public partial class NSpellInput : ColorRect
                         Prediction.PushChar(finaldir);
                     }
                     Result.Add(finaldir);
-                    // 先把这一笔记进 TailAngles，再刷新预测：候补预览的根旋转要从"这一截第一笔"的
-                    // 绝对方向回推，TailAngles 里必须已经有这一笔，否则会整整多退一个转折。
                     var nextAngle=GridHelper.GetAngle(angle,finaldir);
                     TailAngles.Add(nextAngle);
                     UpdatePredictions();
-                    // var lastAxisPoint=AxisPoints[^1];
-                    // var axisPoint=GridHelper.ExtendAxis(lastAxisPoint,nextAngle);
-                    // AxisPoints.Add(axisPoint);
                 }
                 var vec=finalvec*GridSize*0.5f;
                 Accumulate-=vec;
@@ -155,25 +161,10 @@ public partial class NSpellInput : ColorRect
     }
 
     /// <summary>
-    /// 提交当前画出来的串。<see cref="NCaster.CheckSpell"/> 说读不出完整咒语时**不关界面**：
-    /// 整体染红、已经画的笔画留着，玩家可以接着补笔画再松手重试；按 Esc 放弃。
-    /// 成功（或空输入取消）才关界面并清掉提示色。
-    /// <para>
-    /// 只有"整句"槽（<see cref="SlotType.Sentence"/>）才做完整性校验；词典里画的是单个词，
-    /// 允许先画一半再补，所以直接接受。
-    /// </para>
+    /// 关界面。
     /// </summary>
     void Commit()
     {
-        if(NGame.Instance.SelectedSymbolSlot.SlotType==SlotType.Sentence)
-        {
-            var result=NGame.Instance.SpellSlots.Caster.CheckSpell(Result);
-            if(result==NCaster.SpellInputRejected)
-            {
-                Modulate=Colors.Red;
-                return;
-            }
-        }
         Visible=false;
         Modulate=Colors.White;
     }
@@ -244,6 +235,7 @@ public partial class NSpellInput : ColorRect
         Symbol.EdgeLength=GridSize;
         ((ShaderMaterial)Material).SetShaderParameter("hex_size", GridSize*0.577350269189626f);
         Resized += ()=>UpdateSize();
+        UpdateSize();
     }
 
     /// <summary>把当前输入（可以是不完整语句）逐词翻译后显示在屏幕上方。</summary>

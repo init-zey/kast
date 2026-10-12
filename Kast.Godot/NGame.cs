@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Godot;
 using Kast.Core;
@@ -53,171 +52,32 @@ public partial class NGame : Node3D
         DB=new(pg.Seed);
         Alphabet=new KastAlphabet();
         Alphabet.Init(this,DB);
-        var earth=DB.Gen("earth/solid",4);
-        Func<Context,object> earthValue=(ctx) =>{
-            if(ctx.GetFlag("#bit")) return 1;   // 数词读法：地 = 1
-            var vec=Vector3.Up*10f;
-            if(ctx.GetItem(".s") is Func<Context,object> snoun && snoun!=null)
-            {
-                if(ctx.GetFlag("#be"))
-                {
-                    return (NObject obj)=>obj.SetMass(obj.Mass+(float)GetPhysicsProcessDeltaTime());
-                }
-                return snoun(ctx).GetPosition()-vec;
-            }
-            return null;
-        };
-        Alphabet.AddNoun(earth,earthValue);          // N   -> 地（名词语义）
-        Alphabet.AddWord(earth,"Num",earthValue);    // Num -> 地
-        Alphabet.AddWord(earth,"Bit",earthValue);    // Bit -> 地
-        Alphabet.AddTVerb(DB.Gen("go",3), (ctx,s,o)=>{
-            var sobj=(NObject)s(ctx);
-            if(o!=null)
-            {
-                var oin=o(ctx);
-                sobj.ApplyCentralImpulse((o(ctx).GetPosition()-sobj.GlobalPosition).Normalized()*0.5f);
-                sobj.EnableAttractor();
-            }
-            else
-            {
-                ctx.Set(".n",(Func<Context,object>)((Context ctx) =>
-                {
-                    return sobj.GetPosition();
-                }));
-            }
-        }); // 到
-        Alphabet.AddTVerb(DB.Gen("look",3), (ctx,s,o)=>
-        {
-            var sobj=(NObject)s(ctx);
-            if(o!=null)
-            {
-                var oin=o(ctx);
-                var camera=CameraOf(sobj);
-                if(camera != null)
-                {
-                    var vec=sobj.GlobalPosition-oin.GetPosition();
-                    camera.TargetYaw= (float)Math.Atan2(vec.X,vec.Z);
-                }
-                else
-                {
-                    sobj.TurnTo(oin.GetPosition());
-                    sobj.EnableAttractor();
-                }
-            }
-            else
-            {
-                ctx.Set(".n", (Func<Context,object>)((Context ctx) =>
-                {
-                    var camera=CameraOf(sobj);
-                    return camera!=null?camera.AimPoint:sobj.GetAimPoint();
-                }));
-            }
-        }); // 看
-        Alphabet.AddTVerb(DB.Gen("be",4), (ctx,s,o)=>
-        {
-            var sobj=(NObject)s(ctx);
-            if(o!=null)
-            {
-                var oobj=o(ctx.WithFlag("#be"));
-                if (oobj is string typeid)
-                {
-                    sobj.SetType(typeid);
-                }
-                else if (oobj is Action<NObject> converter)
-                {
-                    converter(sobj);
-                }
-            }
-            else
-            {
-                ctx.Set(".n", (Func<Context,object>)((Context ctx) =>
-                {
-                    return sobj.TypeID;
-                }));
-            }
-        }); // 成为
-        Alphabet.AddTVerb(DB.Gen("display",4), (ctx,s,o)=>
-        {
-            var sval=s(ctx);
-            var str=sval.ToString();
-            GetNode<Label>("%DisplayLabel").Text=str;
-        }); // 显示
-        Alphabet.AddTVerb(DB.Gen("cast",4),(ctx,s,o)=>
-        {
-            var bywho=s(ctx) as NObject;
-            if(bywho==null) return;
-            var caster=bywho.Type as NCaster;
-            if(caster==null) return;   // 只有施法者能放咒语
-            var targets=ctx.GetItem(".targets") as List<NObject> ?? [];
-            if(o==null)
-            {
-                // 不带数词就是释放当前选中的槽
-                caster.CastSlot(SpellSlots.Slot,targets);
-                return;
-            }
-            if(o(ctx) is not int number||number<1||number>9)
-            {
-                return;   // 宾语不是数词，或者写成了 0 / 超出九个槽（二进制写法很容易出现这两种）
-            }
-            caster.CastSlot(number-1,targets);
-        }); // 施放
-        // —— 二进制数词：天 = 0、地 = 1，位序列最左位是最高位 ——
-        // Num -> Num Bit 是左递归拼接：左边的数左移一位，再补上这一位。
-        // "Num -> Bit"（一元规则）文法不支持，所以位词条是直接登记成 Num 的（见上面 AddWord）。
-        Alphabet.Grammar.AddRule("Num -> Num Bit", AppendBit);
-        // 数词作宾语：Num 的值是"取出这个数字"的槽（不像 N 的负载是上下文变换）。
-        // 因为 Vt -> Vt Num 也是左递归的，一串位可能被切成好几段数词宾语，
-        // 所以这里把各段拼成一个数（见 BindNumber）：无论怎么切，动词拿到的都是同一个值。
-        Alphabet.Grammar.AddRule("Vt -> Vt Num",(verb, num) => (Context ctx) =>
-        {
-            var inner = BindNumber(ctx, num);
-            return ((Func<Context, Context>)verb)(inner);
-        });
         Alphabet.SetupTokenizer();
+        if(pg.CasterSpells.Length==0)
+        {
+            var firstSpell=new Spell(){
+                FirstDir='w',
+                Angles=new()
+            };
+            firstSpell.BuildFromRealWords(["that","you","be","display"],DB.Translation);
+            pg.CasterSpells =
+            [
+                firstSpell,
+                new(),
+                new(),
+                new(),
+                new(),
+                new(),
+                new(),
+                new(),
+                new()
+            ];
+        }
         // Alphabet=Alphabet.Derive(Alphabet.GetKeys());//FIXME:DEBUG
         // File.WriteAllText("words.csv",DB.Translation.AsText());//FIXME:DEBUG
         LoadLevel(pg.LevelID);
     }
 
-    /// <summary>
-    /// 数词绑进 .o 时用的槽：值 + 位数。绑成 <c>slot.Get</c> 这个委托，拼接时靠 <c>Delegate.Target</c>
-    /// 认出"上一个 .o 是不是一个数"——只靠旗标分不清"名词宾语"和"被名词覆盖过的数词宾语"。
-    /// </summary>
-    sealed class NumSlot(int bits,Func<Context,object> value)
-    {
-        public readonly int Bits=bits;
-        public readonly Func<Context,object> Value=value;
-        public object Get(Context ctx)=>Value(ctx);
-    }
-
-    /// <summary>把数词的值统一成槽：终结数词（单独一个位）的负载要加 #bit 才读得出 0/1。</summary>
-    static NumSlot AsNum(object? value)=>value as NumSlot
-        ?? new NumSlot(1, c => ((Func<Context, object>)value!)(c.WithFlag("#bit")));
-
-    /// <summary>Num -> Num Bit：左边的数左移一位，再补上这一位。</summary>
-    static NumSlot AppendBit(object? high,object? low)
-    {
-        var upper=AsNum(high);
-        return new NumSlot(upper.Bits+1, c =>
-            Convert.ToInt32(upper.Value(c)) * 2 + Convert.ToInt32(((Func<Context, object>)low!)(c.WithFlag("#bit"))));
-    }
-
-    /// <summary>
-    /// Vt -> Vt Num：本段在高位，接到"已经绑好的低位段"前面；没有低位段就自成一段。
-    /// 这样 <c>地天天地</c> 无论被切成几段数词宾语，动词拿到的都是同一个 9。
-    /// </summary>
-    static Context BindNumber(Context ctx,object? num)
-    {
-        var segment=AsNum(num);
-        var lower=ctx.GetItem(".o") is Func<Context,object> value&&value.Target is NumSlot slot?slot:null;
-        var combined=lower is null
-            ? new NumSlot(segment.Bits,segment.Value)
-            : new NumSlot(segment.Bits+lower.Bits, c =>
-                Convert.ToInt32(segment.Value(c)) * (1 << lower.Bits) + Convert.ToInt32(lower.Value(c)));
-        var inner=new Context(ctx);
-        inner.Add(".o",(Func<Context,object>)combined.Get);
-        return inner;
-    }
     /// <summary>存档占位：种子与翻译表现在由 <see cref="SaveSystem"/> 直接持有，这里暂无额外内容要写。</summary>
     public void SaveProgress(Progress pg)
     {

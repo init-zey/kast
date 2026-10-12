@@ -44,9 +44,11 @@ public partial class NLevel : Node3D
         Camera = Helper.LoadScene<PlayerCamera>("PlayerCamera");
         AddChild(Camera);
         Player = Spawn("NCaster", Transform3D.Identity, 1);
+        var caster=(NCaster)Player.Type;
+        caster.Spells=SaveSystem.Current.CasterSpells;
         Camera.Player = Player;
         NGame.Instance.ActiveCamera = Camera;
-        NGame.Instance.SpellSlots.SetCaster((NCaster)Player.Type);
+        NGame.Instance.SpellSlots.SetCaster(caster);
     }
 
     /// <summary>

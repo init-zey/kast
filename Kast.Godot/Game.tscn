@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://bvbw2i37y1im3" path="res://NSpellSymbol.cs" id="3_joorw"]
 [ext_resource type="Shader" uid="uid://c21kh3iurokpy" path="res://Shaders/HexGrid.gdshader" id="4_2vekm"]
 [ext_resource type="Script" uid="uid://bk4p1ymfeaweu" path="res://NSpellInput.cs" id="5_yx171"]
+[ext_resource type="Script" uid="uid://dkqv2e06vdxfx" path="res://NDisplaySpellSymbol.cs" id="5_yyih5"]
 [ext_resource type="Script" uid="uid://deipnfgtk1xiu" path="res://NPredictionsContainer.cs" id="6_joorw"]
 [ext_resource type="Script" uid="uid://0sxeiiy0q0cv" path="res://NDictionary.cs" id="7_2vekm"]
 [ext_resource type="PackedScene" uid="uid://bq7k3m2v8xr4t" path="res://SpellSlots.tscn" id="8_yx171"]
@@ -40,7 +41,7 @@ curve = SubResource("Curve_2vekm")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_yx171"]
 spread = 180.0
-initial_velocity_min = 0.5
+initial_velocity_min = 0.79999995
 initial_velocity_max = 1.0
 gravity = Vector3(0, 0, 0)
 scale_min = 0.049999997
@@ -60,7 +61,8 @@ fov_override = 136.3
 
 [sub_resource type="RibbonTrailMesh" id="RibbonTrailMesh_joorw"]
 material = SubResource("StandardMaterial3D_yhmtn")
-size = 0.1
+size = 0.2
+section_length = 0.4
 curve = SubResource("Curve_yx171")
 
 [node name="Game" type="Node3D" unique_id=985482374 node_paths=PackedStringArray("Particles", "SpellSlots", "PlayerDict", "PauseMenu")]
@@ -96,11 +98,24 @@ anchors_preset = 12
 anchor_top = 1.0
 grow_vertical = 0
 
-[node name="DisplayLabel" type="Label" parent="Hud" unique_id=2041526160]
+[node name="DisplaySpellSymbol" type="Control" parent="Hud" unique_id=2118848543]
 unique_name_in_owner = true
+visible = false
+top_level = true
+custom_minimum_size = Vector2(100, 100)
 layout_mode = 1
-offset_right = 40.0
-offset_bottom = 23.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -50.0
+offset_right = 50.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_yyih5")
 
 [node name="PlayerDictionary" type="PanelContainer" parent="Hud" unique_id=1603871244 node_paths=PackedStringArray("Container", "MainSpellSymbol", "ContainsInfo", "ContainedInfo")]
 layout_mode = 1
@@ -231,7 +246,7 @@ size_flags_vertical = 2
 
 [node name="Particles" type="GPUParticles3D" parent="." unique_id=413402243]
 emitting = false
-amount = 16
+amount = 64
 lifetime = 2.0
 trail_enabled = true
 process_material = SubResource("ParticleProcessMaterial_yx171")

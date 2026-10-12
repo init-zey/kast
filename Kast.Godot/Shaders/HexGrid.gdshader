@@ -64,7 +64,7 @@ void fragment() {
 
     // 判断是否在尖顶六边形内部
     float R = hex_size;
-    bool inside = length(d)<2.0;
+    bool inside = (abs(d.x)+abs(d.y))<2.0;
 
     vec4 color = inside ? fg_color : bg_color;
     COLOR = color;
