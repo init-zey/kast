@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Kast.Core;
 
 namespace Kast.Godot;
 
@@ -49,8 +50,7 @@ public class Database(int seed)
     /// <summary>长度上限。前缀无关下短词形占满会让长词形全部失效，撞到上限说明词表本身不合法。</summary>
     const int MaxLength = 64;
 
-    readonly Dictionary<string,string> ToRealTranslations=new();
-    readonly Dictionary<string,string> ToGameTranslations=new();
+    public GameTranslation Translation=new();
 
     /// <summary>已用词形的前缀树，兼任"已占用"集合与"前缀冲突"判据。</summary>
     readonly PrefixTrie used=new();
@@ -101,7 +101,7 @@ public class Database(int seed)
         ArgumentNullException.ThrowIfNull(real);
         ArgumentOutOfRangeException.ThrowIfLessThan(minLength,1);
 
-        if(ToGameTranslations.TryGetValue(real,out var registered))
+        if(Translation.ToGame.TryGetValue(real,out var registered))
         {
             return registered;   // 幂等：重复登记不会让两张表失去互逆
         }
@@ -127,8 +127,7 @@ public class Database(int seed)
                 {
                     continue;   // 已被占用，或与已用词形构成前缀关系
                 }
-                ToRealTranslations[token]=real;
-                ToGameTranslations[real]=token;
+                Translation.RegisterRealToGame(real,token);
                 used.Add(token);
                 return token;
             }
@@ -231,31 +230,10 @@ public class Database(int seed)
         return true;
     }
 
-    public string GetGameWord(string realWord)
-    {
-        return ToGameTranslations.TryGetValue(realWord,out var game)?game:null;
-    }
-
-    public string GetRealWord(string gameWord)
-    {
-        return ToRealTranslations.TryGetValue(gameWord,out var real)?real:null;
-    }
-
     public int GetSeed()
     {
         return seed;
     }
-
-    public string AsText()
-    {
-        var text=new StringBuilder("Real Word,Game Word");
-        foreach(var kvp in ToGameTranslations)
-        {
-            text.Append('\n').Append(kvp.Key).Append(',').Append(kvp.Value);
-        }
-        return text.ToString();
-    }
-
     /// <summary>
     /// 已用词形的前缀树，只支持"插入词形"和"这个候选词形能不能用"：
     /// 冲突 = 已被占用，或与某个已用词形互为前缀（任一方向）。

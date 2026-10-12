@@ -37,8 +37,9 @@ public partial class NCaster : NObjectType3D
 
     /// <summary>
     /// 把画出来的串读成候补咒语：整串必须完整成词，末尾还留着没画完的残片就算失败。
-    /// 与 SpellInput 顶部的实时翻译（<see cref="NGame.Transcript"/>）共用
-    /// <see cref="Alphabet{O}.TokenizePrefix"/> 这一套分词规则（逐段最长匹配），
+    /// 完整性由 <see cref="Alphabet{O}.Parse(Span{char})"/> 内部保证——它先做逐段最长匹配的
+    /// 前缀分词，只有覆盖满整串时才返回解析结果（残缺时返回空集）。
+    /// 与 SpellInput 顶部的实时翻译（<see cref="NGame.Transcript"/>）共用同一套分词规则，
     /// 所以"界面上显示成词"与"能填进槽"永远一致。
     /// </summary>
     public HashSet<Word> ReadSpells(Spell input)
@@ -47,9 +48,8 @@ public partial class NCaster : NObjectType3D
         {
             return [];
         }
-        var alphabet=NGame.Instance.ProgressAlphabet;
-        var tokens=alphabet.TokenizePrefix(new string(input.Angles.ToArray()),out var consumed);
-        return consumed==input.Angles.Count?alphabet.Parse(tokens):[];
+        var alphabet=NGame.Instance.Alphabet;
+        return alphabet.Parse(input.Angles.ToArray());
     }
     /// <summary>施放指定槽（0..8）。越界、空槽或解析不出咒语时什么都不做，返回是否真的施放了。</summary>
     public bool CastSlot(int index,List<NObject> targets=null)

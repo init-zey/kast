@@ -13,7 +13,7 @@ menu.quit,Quit,退出
 menu.back,Back,返回
 menu.empty_slot,No save found,没有找到存档
 menu.broken_save,Save file is corrupted,存档已损坏
-menu.save_info,Seed {0} · {1} symbols,"{0},{1}"
+menu.save_info,Seed {0},"种子{0}"
 settings.title,Settings,设置
 settings.language,Language,语言
 settings.volume,Master Volume,主音量

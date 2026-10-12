@@ -19,6 +19,6 @@ public partial class NDictEntry : PanelContainer
             FirstDir=rootRotation,
             Angles=token.ToCharArray().ToList()
         });
-        Label.Text=NGame.Instance.DB.GetRealWord(token);
+        Label.Text=SaveSystem.Current.PlayerTranslation.GetRealWord(token);
     }
 }

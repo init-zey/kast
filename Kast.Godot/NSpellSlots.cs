@@ -110,8 +110,6 @@ public partial class NSpellSlots : Control
         }
     }
     
-    /// <summary>清空指定槽位，不传就清当前槽。返回是否真的清掉了东西。</summary>
-
     /// <summary>切换当前槽位（滚轮/数字键都走这里），会环绕。</summary>
     public void SelectSlot(int index)
     {
@@ -139,13 +137,12 @@ public partial class NSpellSlots : Control
         SelectSlot(Slot+delta);
     }
 
-    /// <summary>按当前槽里的输入重新解析出候补咒语。</summary>
-
     /// <summary>施放当前选中的槽。</summary>
     public bool CastCurrent(List<NObject> targets=null)
     {
         return Caster.CastSlot(Slot,targets);
     }
+    /// <summary>把施法者的槽位数据交给本 UI：重建九个槽位控件并选中第一个。</summary>
     public void SetCaster(NCaster caster)
     {
         Helper.ClearChild(Grid);
@@ -162,8 +159,13 @@ public partial class NSpellSlots : Control
             SelectSlot(0);
         }
     }
+    /// <summary>每物理帧按槽里是否已有起笔刷新"空槽"灰显，使画完/清空能立刻反映到界面上。</summary>
     public void _PhysicsProcess()
     {
+        if(Symbols==null)
+        {
+            return;   // 还没 SetCaster：场景刚加载的头几帧
+        }
         for(int i=0;i<Symbols.Length;i++)
         {
             var sym=Symbols[i];

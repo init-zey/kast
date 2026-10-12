@@ -202,7 +202,7 @@ public partial class NSpellInput : ColorRect
         Symbol.EdgeLength=GridSize;
         ((ShaderMaterial)Material).SetShaderParameter("hex_size", GridSize*0.577350269189626f);
         Resized += ()=>UpdateSize();
-        Prediction=NGame.Instance.ProgressAlphabet.CreatePrediction();
+        Prediction=NGame.Instance.PlayerTokenzier.CreatePrediction();
     }
 
     /// <summary>把当前输入（可以是不完整语句）逐词翻译后显示在屏幕上方。</summary>

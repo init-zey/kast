@@ -1,6 +1,15 @@
 [gd_scene format=3 uid="uid://c8nqm3v1kha7e"]
 
 [ext_resource type="Script" uid="uid://b7xkd4m2pqwas" path="res://NMainMenu.cs" id="1_menu"]
+[ext_resource type="Shader" uid="uid://c21kh3iurokpy" path="res://Shaders/HexGrid.gdshader" id="2_eiy7p"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8iifg"]
+shader = ExtResource("2_eiy7p")
+shader_parameter/fg_color = Color(1, 1, 1, 1)
+shader_parameter/bg_color = Color(0, 0, 0, 1)
+shader_parameter/node_size = Vector2(1024, 768)
+shader_parameter/offset = Vector2(0, 0)
+shader_parameter/hex_size = 20.0
 
 [sub_resource type="Gradient" id="Gradient_backdrop"]
 colors = PackedColorArray(0.05, 0.06, 0.09, 1, 0.01, 0.01, 0.02, 1)
@@ -46,6 +55,7 @@ VersionLabel = NodePath("VersionLabel")
 ConfirmNewDialog = NodePath("ConfirmNewDialog")
 
 [node name="Backdrop" type="TextureRect" parent="." unique_id=848378410]
+material = SubResource("ShaderMaterial_8iifg")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -67,7 +77,8 @@ alignment = 1
 
 [node name="MenuPanel" type="VBoxContainer" parent="Root" unique_id=2143687569]
 layout_mode = 2
-size_flags_horizontal = 4
+size_flags_horizontal = 0
+size_flags_vertical = 2
 theme_override_constants/separation = 10
 
 [node name="Spacer" type="Control" parent="Root/MenuPanel" unique_id=536949329]

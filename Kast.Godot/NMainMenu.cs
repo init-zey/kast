@@ -146,8 +146,7 @@ public partial class NMainMenu : Control
         {
             return T("menu.broken_save");
         }
-        var count=progress.UnlockedSymbols?.Length??0;
-        return NLocalization.Format("menu.save_info",progress.Seed,count);
+        return NLocalization.Format("menu.save_info",progress.Seed);
     }
 
     void ShowMenu()
@@ -199,7 +198,7 @@ public partial class NMainMenu : Control
         {
             Seed=0,
             // Seed=(int)(GD.Randi()&0x7FFFFFFF),
-            UnlockedSymbols=Array.Empty<string>(),
+            PlayerTranslation=new(),
             LevelID="1"
         });
         GetTree().ChangeSceneToFile(GameScene);
