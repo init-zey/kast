@@ -40,6 +40,15 @@ point_count = 3
 curve = SubResource("Curve_2vekm")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_yx171"]
+emission_shape = 6
+emission_ring_axis = Vector3(0, 1, 0)
+emission_ring_height = 0.1
+emission_ring_radius = 0.5
+emission_ring_inner_radius = 0.0
+emission_ring_cone_angle = 90.0
+angle_min = -720.0
+angle_max = 720.0
+direction = Vector3(0, 1, 0)
 spread = 180.0
 initial_velocity_min = 0.79999995
 initial_velocity_max = 1.0
@@ -47,9 +56,13 @@ gravity = Vector3(0, 0, 0)
 scale_min = 0.049999997
 scale_max = 0.099999994
 scale_curve = SubResource("CurveTexture_2vekm")
+scale_over_velocity_min = 0.5
+scale_over_velocity_max = 1.0
+turbulence_noise_strength = 0.1
+turbulence_noise_scale = 0.0
 
 [sub_resource type="Curve" id="Curve_yx171"]
-_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.50373936, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.09766514, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 3
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yhmtn"]
@@ -61,8 +74,9 @@ fov_override = 136.3
 
 [sub_resource type="RibbonTrailMesh" id="RibbonTrailMesh_joorw"]
 material = SubResource("StandardMaterial3D_yhmtn")
-size = 0.2
-section_length = 0.4
+size = 0.5
+section_length = 2.0
+section_segments = 9
 curve = SubResource("Curve_yx171")
 
 [node name="Game" type="Node3D" unique_id=985482374 node_paths=PackedStringArray("Particles", "SpellSlots", "PlayerDict", "PauseMenu")]
@@ -247,7 +261,6 @@ size_flags_vertical = 2
 [node name="Particles" type="GPUParticles3D" parent="." unique_id=413402243]
 emitting = false
 amount = 64
-lifetime = 2.0
 trail_enabled = true
 process_material = SubResource("ParticleProcessMaterial_yx171")
 draw_pass_1 = SubResource("RibbonTrailMesh_joorw")

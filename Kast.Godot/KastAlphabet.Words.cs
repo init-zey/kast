@@ -1,6 +1,5 @@
 using System;
 using Godot;
-using Kast.Core;
 using O=System.Func<Kast.Core.Context,object>;
 
 namespace Kast.Godot;
@@ -18,22 +17,12 @@ public partial class KastAlphabet
     {
         AddNoun(db.Gen("i",2), ctx => ctx.GetItem(".me") as NObject);   // 我
         AddNoun(db.Gen("you",2), ctx => ctx.GetItem(".you") as NObject); // 你
-        AddSky();
-        AddEarth();
-    }
 
-    /// <summary>
-    /// 天：既是名词（天空 / 向上 / 减轻），又能当二进制位 0。
-    /// </summary>
-    /// <remarks>
-    /// 两种读法靠旗标区分，词条本身不必知道自己在被当名词还是当位用：
-    /// <c>#bit</c> 走位义；否则看 <c>#be</c>——有它是"成为"的宾语（改质量），
-    /// 没它是普通名词（取相对位置）。
-    /// </remarks>
-    void AddSky()
-    {
+        // 天：既是名词（天空 / 向上 / 减轻），又能当二进制位 0。
+        // 两种读法靠旗标区分，词条本身不必知道自己在被当名词还是当位用：
+        // #bit 走位义；否则看 #be——有它是"成为"的宾语（改质量），没它是普通名词（取相对位置）。
         var sky=db.Gen("sky/air",4);
-        O value=(ctx) =>
+        RegisterBitWord(sky,(ctx) =>
         {
             if(ctx.GetFlag("#bit")) return 0;
             if(ctx.GetItem(".s") is O subject)
@@ -45,15 +34,11 @@ public partial class KastAlphabet
                 return subject(ctx).GetPosition()+Vector3.Up*10f;
             }
             return null;
-        };
-        RegisterBitWord(sky,value);
-    }
+        });
 
-    /// <summary>地：与"天"相对，名词义为大地 / 向下 / 加重，位义为 1。</summary>
-    void AddEarth()
-    {
+        // 地：与"天"相对，名词义为大地 / 向下 / 加重，位义为 1。
         var earth=db.Gen("earth/solid",4);
-        O value=(ctx) =>
+        RegisterBitWord(earth,(ctx) =>
         {
             if(ctx.GetFlag("#bit")) return 1;
             if(ctx.GetItem(".s") is O subject)
@@ -65,8 +50,7 @@ public partial class KastAlphabet
                 return subject(ctx).GetPosition()-Vector3.Up*10f;
             }
             return null;
-        };
-        RegisterBitWord(earth,value);
+        });
     }
 
     /// <summary>

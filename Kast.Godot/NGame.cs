@@ -92,9 +92,10 @@ public partial class NGame : Node3D
 
     /// <summary>
     /// 把输入里已经成词的完整 token 逐个翻译成真实单词并拼接，供 SpellInput 顶部实时显示。
-    /// 末尾没画完的残片不显示；分词走的是和提交（<see cref="NCaster.CheckSpell"/>）完全同一套规则
-    /// （<see cref="Tokenizer.TokenizePrefix"/>：逐段最长匹配），
-    /// 所以界面上显示的词序就是提交时会被接受的那一种，不会再出现"显示成词却填不进槽"。
+    /// 末尾没画完的残片不显示；分词走的是和施放（<see cref="NCaster.CastSlot"/> 里的
+    /// <see cref="NCaster.ReadSpells"/>）完全同一套规则（<see cref="Tokenizer.TokenizePrefix"/>：
+    /// 逐段最长匹配），所以界面上显示的词序就是施放时会被接受的那一种，
+    /// 不会出现"显示成词却放不出来"。
     /// </summary>
     public string Transcript(string input)
     {

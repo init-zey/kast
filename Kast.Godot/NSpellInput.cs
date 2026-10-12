@@ -38,18 +38,21 @@ public partial class NSpellInput : ColorRect
     Prediction Prediction;
     /// <summary>每一笔的绝对方向，供候补预览回推词条的根旋转（见 <see cref="RootRotation"/>）。</summary>
     List<int> TailAngles=new();
+    /// <summary>起笔前槽里原有的内容；Esc 放弃时据此还原，使整个作画过程可以撤销。</summary>
+    Spell Backup=new();
     // List<(int x,int y)> AxisPoints=new();
     /// <summary>
-    /// 起笔：右键按下且当前没在画时，绑定到选中槽位并清空它的内容开始重画；
-    /// Esc（<c>deselect</c>）放弃时连同槽里已有的数据一起清掉。
+    /// 起笔：右键按下且当前没在画时，绑定到选中槽位并从它<b>已有的内容</b>接着画；
+    /// Esc（<c>deselect</c>）放弃时把槽还原成 <see cref="Backup"/>（进来时的样子）。
     /// </summary>
     public override void _Input(InputEvent @event)
     {
         if(NGame.Instance.SelectedSymbolSlot==null) return;
-        // 画到一半放弃：Esc 关掉界面，清空槽里已有的数据
+        // 画到一半放弃：Esc 关掉界面，并把槽恢复成这次起笔之前的内容
         if(Visible&&@event.IsActionPressed("deselect"))
         {
-            Result.Clear();
+            Result.FirstDir=Backup.FirstDir;
+            Result.Angles= [.. Backup.Angles];
             Visible=false;
             Modulate=Colors.White;
             GetViewport().SetInputAsHandled();
@@ -62,6 +65,8 @@ public partial class NSpellInput : ColorRect
                 if(NGame.Instance.SelectedSymbolSlot==null) return;
                 Visible=true;
                 Result=NGame.Instance.SelectedSymbolSlot.Symbol.Spell;
+                Backup.FirstDir=Result.FirstDir;
+                Backup.Angles= [.. Result.Angles];
                 Translation=NGame.Instance.SelectedSymbolSlot.Translation;
                 Prediction=NGame.Instance.PlayerTokenzier.CreatePrediction();
                 Symbol.Spell=Result;
@@ -69,22 +74,28 @@ public partial class NSpellInput : ColorRect
                 Accumulate=new();
                 Helper.ClearChild(Predictions);
                 PredictionItems.Clear();
-                Origin=-mouse.Position;
                 TailAngles.Clear();
                 QueueRedraw();
 
-                var angle=Array.IndexOf(GridHelper.Chars, Result.FirstDir);
-                TailAngles.Add(angle);
-                var vec=GridHelper.AngleToVec(angle);
-                foreach(var ch in Result.Angles)
+                // 空槽没有起笔方向，此时不预置 TailAngles：第一笔由下面的实时路径
+                // 按"没有上一笔就从 0 起算"的约定建立（见 _GuiInput 里的 angle 取值）。
+                var vec=Vector2.Zero;
+                if(Result.HasFirstDir)
                 {
-                    Prediction.PushChar(ch);
-                    angle=GridHelper.GetAngle(angle,ch);
+                    var angle=Array.IndexOf(GridHelper.Chars,Result.FirstDir);
+                    TailAngles.Add(angle);
                     vec=GridHelper.AngleToVec(angle);
+                    foreach(var ch in Result.Angles)
+                    {
+                        Prediction.PushChar(ch);
+                        angle=GridHelper.GetAngle(angle,ch);
+                        TailAngles.Add(angle);
+                        vec+=GridHelper.AngleToVec(angle);
+                    }
                 }
                 UpdateTranscript();
                 UpdatePredictions();
-                SetOrigin(Origin+Accumulate);
+                Origin=-mouse.Position+vec*GridSize;
             }
         }
     }
