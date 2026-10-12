@@ -8,7 +8,7 @@ public partial class NSpellSlots : Control
 {
     [Export] public Control Grid;
     [Export] public Color EmptyColor=new(1f,1f,1f,0.25f);
-    [Export(PropertyHint.Range,"8,128,1")] public float SlotSize=56f;
+    [Export(PropertyHint.Range,"8,128,1")] public float SlotSize=67f;
 
     public NSpellSymbolSlot[] Slots;
     /// <summary>当前选中的槽位，0..8。</summary>
@@ -23,7 +23,7 @@ public partial class NSpellSlots : Control
         {
             CustomMinimumSize=size,
             MouseFilter=MouseFilterEnum.Ignore,
-            EdgeWidth=2,
+            EdgeWidth=1,
         };
         symbol.SetSpell(spell);
         var slot=new NSpellSymbolSlot

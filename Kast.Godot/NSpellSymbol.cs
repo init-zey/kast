@@ -36,7 +36,7 @@ public partial class NSpellSymbol : Control
         var rect = GridHelper.GetRect(Spell);
         float k=0;
         float s=0;
-        float w=0.7f;
+        float w=0.8f;
         if(EdgeLength<0)
         {
             if(rect.Size.X<rect.Size.Y)
@@ -54,8 +54,8 @@ public partial class NSpellSymbol : Control
         {
             var p=PlacePoint(tail, o, s);
             ExtendCurve(points, p,ref k);
-            DrawCircle(p,EdgeWidth*(0.5f+w),Colors.White);
-            w*=0.6f;
+            DrawCircle(p,EdgeWidth*(0.8f+w),Colors.White);
+            w*=0.8f;
             tail += GridHelper.CharToVec(ref a,c);
         }
         ExtendCurve(points, PlacePoint(tail, o, s),ref k);

@@ -52,9 +52,20 @@ public class GameTranslation
         return text.ToString();
     }
 
-    /// <summary>登记一条双向映射，同时写入 <see cref="ToReal"/> 与 <see cref="ToGame"/>，保证两表互逆。</summary>
+    /// <summary>
+    /// 登记一条双向映射，同时写入 <see cref="ToReal"/> 与 <see cref="ToGame"/>，保证两表互逆。
+    /// </summary>
+    /// <remarks>
+    /// 一个词形只能对应一个真实词：若 <paramref name="token"/> 已被别的真实词占用，
+    /// 先把它从 <see cref="ToGame"/> 里摘掉，避免留下"旧词 → 同一词形"的悬空反查。
+    /// （词典里改词条名字就会走到这条路径。）
+    /// </remarks>
     public void RegisterRealToGame(string real, string token)
     {
+        if(ToReal.TryGetValue(token,out var prevReal))
+        {
+            ToGame.Remove(prevReal);
+        }
         ToReal[token]=real;
         ToGame[real]=token;
         Tokenizer.CompileTokens(Tokens);

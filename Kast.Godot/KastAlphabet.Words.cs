@@ -21,7 +21,13 @@ public partial class KastAlphabet
         // 天：既是名词（天空 / 向上 / 减轻），又能当二进制位 0。
         // 两种读法靠旗标区分，词条本身不必知道自己在被当名词还是当位用：
         // #bit 走位义；否则看 #be——有它是"成为"的宾语（改质量），没它是普通名词（取相对位置）。
+        //
+        // 地取"天"的镜像词形（Flip 是 q↔e、a↔d 的对合）：两个字在语义上一对相反
+        // （上/下、轻/重、0/1），画面上也就成一对手性相反的图形。
+        // 前缀树按 Flip 归一化，所以词形与镜像被视为同一个词，只需登记一次。
         var sky=db.Gen("sky/air",4);
+        var earth=GridHelper.Flip(sky);
+        db.Translation.RegisterRealToGame("earth/solid",earth);
         RegisterBitWord(sky,(ctx) =>
         {
             if(ctx.GetFlag("#bit")) return 0;
@@ -37,7 +43,6 @@ public partial class KastAlphabet
         });
 
         // 地：与"天"相对，名词义为大地 / 向下 / 加重，位义为 1。
-        var earth=db.Gen("earth/solid",4);
         RegisterBitWord(earth,(ctx) =>
         {
             if(ctx.GetFlag("#bit")) return 1;

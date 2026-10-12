@@ -31,6 +31,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
 script = ExtResource("3_xk0jl")
+EdgeWidth = 2.0
 
 [node name="Label" type="LineEdit" parent="MarginContainer/VBoxContainer" unique_id=1749012216]
 layout_mode = 2

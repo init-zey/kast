@@ -26,7 +26,7 @@ public partial class NSpellInput : ColorRect
     [Export] public Label Transcript;
     /// <summary>当前显示的候补条目，按词形索引，用于复用而不必每次重建场景。</summary>
     public Dictionary<string,NSpellEntry> PredictionItems=new();
-    const float GridSize=80;
+    const float GridSize=40;
     /// <summary>当前这一笔尚未吸附到某个网格方向前的累计位移。</summary>
     Vector2 Accumulate;
     /// <summary>已画部分的屏幕原点，随每一笔推进。</summary>
@@ -69,20 +69,21 @@ public partial class NSpellInput : ColorRect
                 Backup.Angles= [.. Result.Angles];
                 Translation=NGame.Instance.SelectedSymbolSlot.Translation;
                 Prediction=NGame.Instance.PlayerTokenzier.CreatePrediction();
+                if(Result.FirstDir==' ')Result.FirstDir='w';
                 Symbol.Spell=Result;
+                Symbol.Rotation=0;
                 Modulate=Colors.White;
                 Accumulate=new();
                 Helper.ClearChild(Predictions);
                 PredictionItems.Clear();
                 TailAngles.Clear();
-                QueueRedraw();
 
                 // 空槽没有起笔方向，此时不预置 TailAngles：第一笔由下面的实时路径
                 // 按"没有上一笔就从 0 起算"的约定建立（见 _GuiInput 里的 angle 取值）。
                 var vec=Vector2.Zero;
                 if(Result.HasFirstDir)
                 {
-                    var angle=Array.IndexOf(GridHelper.Chars,Result.FirstDir);
+                    var angle=Array.IndexOf(GridHelper.Chars,Symbol.Spell.FirstDir);
                     TailAngles.Add(angle);
                     vec=GridHelper.AngleToVec(angle);
                     foreach(var ch in Result.Angles)
@@ -96,6 +97,8 @@ public partial class NSpellInput : ColorRect
                 UpdateTranscript();
                 UpdatePredictions();
                 Origin=-mouse.Position+vec*GridSize;
+                SetOrigin(Origin+Accumulate);
+                QueueRedraw();
             }
         }
     }

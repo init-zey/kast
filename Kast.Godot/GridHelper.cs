@@ -124,6 +124,28 @@ public static class GridHelper
         }
     }
 
+    /// <summary>
+    /// 把一个方向字符换成它关于 w–s 轴的镜像：q↔e、a↔d，w 与 s 在轴上不动。
+    /// <para>
+    /// 这是<b>对合</b>（<c>Flip(Flip(c)) == c</c>），因此"词形与它的镜像等价"这件事
+    /// 可以安全地用它来归一化：两者会落到同一个键，而不同词形不会互相并掉。
+    /// 天（q 系）与地（e 系）就是这样一对镜像词，见 <c>KastAlphabet.Words</c>。
+    /// </para>
+    /// </summary>
+    public static char Flip(char ch)
+    {
+        if(ch == 'q') return 'e';
+        if(ch == 'e') return 'q';
+        if(ch == 'a') return 'd';
+        if(ch == 'd') return 'a';
+        return ch;
+    }
+    /// <summary>逐字符镜像，见 <see cref="Flip(char)"/>。</summary>
+    public static string Flip(string str)
+    {
+        return new string(str.Select(Flip).ToArray());
+    }
+
     static GridHelper()
     {
         Axis = new()

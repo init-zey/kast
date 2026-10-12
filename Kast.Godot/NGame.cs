@@ -73,7 +73,7 @@ public partial class NGame : Node3D
                 new()
             ];
         }
-        // Alphabet=Alphabet.Derive(Alphabet.GetKeys());//FIXME:DEBUG
+        SaveSystem.Current.PlayerTranslation=DB.Translation;//FIXME:DEBUG
         // File.WriteAllText("words.csv",DB.Translation.AsText());//FIXME:DEBUG
         LoadLevel(pg.LevelID);
     }

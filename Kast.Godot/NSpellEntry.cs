@@ -91,8 +91,20 @@ public partial class NSpellEntry : NSpellSymbolSlot
                 IsIncreaser=false;
                 PlayerDictionary.AddIncreaser();
             }
+            // 名字唯一：与已有条目重名就补一个 '*'，因为下面按名字查节点（悬停/选中都靠它）
+            while(PlayerDictionary.Container.GetNodeOrNull(Real.Text) is Node sameNameEntry && sameNameEntry != this)
+            {
+                Real.Text+="*";
+            }
             Name=Real.Text;
-            PlayerDictionary.Translation.RegisterRealToGame(Real.Text,Symbol.Spell.AsString());
+            // 词形唯一：同一个词形只允许一个真实词。若这个词形原先属于别的条目，
+            // 说明玩家把新词指定给了同一个画法，旧条目已被顶掉，这里把它从列表里清掉。
+            var token=Symbol.Spell.AsString();
+            if(PlayerDictionary.Translation.ToReal.TryGetValue(token,out var prevReal)&&PlayerDictionary.Container.GetNodeOrNull(prevReal) is Node prevEntry && prevEntry != this)
+            {
+                prevEntry.QueueFree();
+            }
+            PlayerDictionary.Translation.RegisterRealToGame(Real.Text,token);
         }
     }
 

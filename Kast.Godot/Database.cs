@@ -238,6 +238,12 @@ public class Database(int seed)
     /// 已用词形的前缀树，只支持"插入词形"和"这个候选词形能不能用"：
     /// 冲突 = 已被占用，或与某个已用词形互为前缀（任一方向）。
     /// </summary>
+    /// <remarks>
+    /// 走路径时字符一律先过 <see cref="GridHelper.Flip"/>：词形与它的镜像视为同一个词
+    /// （"天"与"地"就是一对手性相反的词，见 <c>KastAlphabet.Words</c>），
+    /// 所以只登记其中一侧即可。注意必须是 <see cref="GridHelper.Flip"/> 这种对合，
+    /// 不能用多对一的投影，否则会把无关词形也并在一起、白白吃掉词表容量。
+    /// </remarks>
     sealed class PrefixTrie
     {
         sealed class Node
@@ -261,7 +267,7 @@ public class Database(int seed)
                 {
                     return true;        // 某个已用词形是它的真前缀
                 }
-                var slot=SlotOf[token[i]];
+                var slot=SlotOf[GridHelper.Flip(token[i])];
                 if(slot<0)
                 {
                     return true;        // 非法字符：保守拒绝
@@ -282,7 +288,7 @@ public class Database(int seed)
             node.Below++;
             foreach(var c in token)
             {
-                var slot=SlotOf[c];
+                var slot=SlotOf[GridHelper.Flip(c)];
                 node=node.Next[slot]??=new Node();
                 node.Below++;
             }

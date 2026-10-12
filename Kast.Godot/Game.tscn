@@ -106,27 +106,21 @@ script = ExtResource("2_3mrqo")
 SpellInput = NodePath("SpellInput")
 SpellSymbol = NodePath("SpellInput/SpellSymbol")
 
-[node name="SpellSlots" parent="Hud" unique_id=1759444355 instance=ExtResource("8_yx171")]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-grow_vertical = 0
-
 [node name="DisplaySpellSymbol" type="Control" parent="Hud" unique_id=2118848543]
 unique_name_in_owner = true
 visible = false
 top_level = true
-custom_minimum_size = Vector2(100, 100)
+custom_minimum_size = Vector2(300, 300)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -50.0
-offset_top = -50.0
-offset_right = 50.0
-offset_bottom = 50.0
+offset_left = 159.0
+offset_top = -77.0
+offset_right = 459.0
+offset_bottom = 223.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("5_yyih5")
@@ -152,7 +146,9 @@ layout_mode = 2
 
 [node name="Dictionary" type="ScrollContainer" parent="Hud/PlayerDictionary/VBoxContainer" unique_id=113614413]
 layout_mode = 2
+scroll_vertical_custom_step = 100.0
 vertical_scroll_mode = 0
+scroll_hint_mode = 1
 
 [node name="EntrysContainer" type="HBoxContainer" parent="Hud/PlayerDictionary/VBoxContainer/Dictionary" unique_id=2083838248]
 layout_mode = 2
@@ -174,7 +170,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 script = ExtResource("3_joorw")
-EdgeWidth = 12.0
 
 [node name="Clues" type="ScrollContainer" parent="Hud/PlayerDictionary/VBoxContainer/HBoxContainer" unique_id=776166572]
 layout_mode = 2
@@ -258,6 +253,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 2
 
+[node name="SpellSlots" parent="Hud" unique_id=1759444355 instance=ExtResource("8_yx171")]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+grow_vertical = 0
+
 [node name="Particles" type="GPUParticles3D" parent="." unique_id=413402243]
 emitting = false
 amount = 64
@@ -267,7 +268,6 @@ draw_pass_1 = SubResource("RibbonTrailMesh_joorw")
 
 [node name="PauseMenu" type="Control" parent="." unique_id=660606740 node_paths=PackedStringArray("PausePanel", "ResumeButton", "KeybindingButton", "QuitButton", "QuitConfirm")]
 process_mode = 3
-visible = false
 texture_filter = 1
 layout_mode = 3
 anchors_preset = 15
@@ -275,6 +275,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_gwjdr")
 script = ExtResource("11_pause")
 PausePanel = NodePath("PausePanel")
 ResumeButton = NodePath("PausePanel/Menu/ResumeButton")
@@ -282,14 +283,13 @@ KeybindingButton = NodePath("PausePanel/Menu/KeybindingButton")
 QuitButton = NodePath("PausePanel/Menu/QuitButton")
 QuitConfirm = NodePath("QuitConfirm")
 
-[node name="Backdrop" type="ColorRect" parent="PauseMenu" unique_id=1375321240]
+[node name="Backdrop" type="Panel" parent="PauseMenu" unique_id=1403541989]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.54901963)
 
 [node name="PausePanel" type="PanelContainer" parent="PauseMenu" unique_id=1730310180]
 custom_minimum_size = Vector2(280, 0)
@@ -299,6 +299,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -68.5
+offset_right = 140.0
+offset_bottom = 68.5
 grow_horizontal = 2
 grow_vertical = 2
 
