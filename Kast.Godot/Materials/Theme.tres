@@ -1,3 +1,11 @@
 [gd_resource type="Theme" format=3 uid="uid://ct5hn2vq8kwmb"]
 
+[ext_resource type="Texture2D" uid="uid://bgn6xsoqj1dfh" path="res://Assets/panel.png" id="1_76opf"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_lvtmh"]
+texture = ExtResource("1_76opf")
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+
 [resource]
+PanelContainer/styles/panel = SubResource("StyleBoxTexture_lvtmh")

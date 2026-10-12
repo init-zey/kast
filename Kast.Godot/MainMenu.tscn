@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c8nqm3v1kha7e"]
 
-[ext_resource type="Script" uid="uid://b7xkd4m2pqwas" path="res://NMainMenu.cs" id="1_menu"]
+[ext_resource type="Script" uid="uid://b7xkd4m2pqwas" path="res://NMainMenu.cs" id="1_eiy7p"]
 [ext_resource type="Shader" uid="uid://c21kh3iurokpy" path="res://Shaders/HexGrid.gdshader" id="2_eiy7p"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_8iifg"]
@@ -11,26 +11,6 @@ shader_parameter/node_size = Vector2(1024, 768)
 shader_parameter/offset = Vector2(0, 0)
 shader_parameter/hex_size = 20.0
 
-[sub_resource type="Gradient" id="Gradient_backdrop"]
-colors = PackedColorArray(0.05, 0.06, 0.09, 1, 0.01, 0.01, 0.02, 1)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_backdrop"]
-gradient = SubResource("Gradient_backdrop")
-height = 512
-fill_from = Vector2(0.5, 0)
-fill_to = Vector2(0.5, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-content_margin_left = 32.0
-content_margin_top = 28.0
-content_margin_right = 32.0
-content_margin_bottom = 28.0
-bg_color = Color(0.09, 0.1, 0.14, 0.94)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-
 [node name="MainMenu" type="Control" unique_id=932772019 node_paths=PackedStringArray("MenuPanel", "ContinueButton", "NewGameButton", "SettingsButton", "QuitButton", "SaveInfoLabel", "SettingsPanel", "LanguageButton", "VolumeSlider", "VolumeValueLabel", "FullscreenButton", "BackButton", "VersionLabel", "ConfirmNewDialog")]
 layout_mode = 3
 anchors_preset = 15
@@ -38,7 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_menu")
+script = ExtResource("1_eiy7p")
 MenuPanel = NodePath("Root/MenuPanel")
 ContinueButton = NodePath("Root/MenuPanel/ContinueButton")
 NewGameButton = NodePath("Root/MenuPanel/NewGameButton")
@@ -63,13 +43,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = SubResource("GradientTexture2D_backdrop")
 
 [node name="Root" type="VBoxContainer" parent="." unique_id=844134383]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -151.0
+offset_right = 210.0
+offset_bottom = 151.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 12
@@ -125,7 +110,6 @@ metadata/text_key = "menu.quit"
 visible = false
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
 [node name="Box" type="VBoxContainer" parent="Root/SettingsPanel" unique_id=1449721296]
 custom_minimum_size = Vector2(460, 0)
@@ -134,7 +118,6 @@ theme_override_constants/separation = 14
 
 [node name="SettingsTitle" type="Label" parent="Root/SettingsPanel/Box" unique_id=2142174261]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.78, 1, 1)
 theme_override_font_sizes/font_size = 26
 text = "settings.title"
 horizontal_alignment = 1
@@ -208,8 +191,6 @@ theme_override_font_sizes/font_size = 20
 
 [node name="Hint" type="Label" parent="Root/SettingsPanel/Box" unique_id=691987566]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.62, 0.65, 0.72, 1)
-theme_override_font_sizes/font_size = 14
 text = "settings.hint"
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -234,11 +215,10 @@ offset_top = -30.0
 offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.62, 0.65, 0.72, 1)
-theme_override_font_sizes/font_size = 14
 text = "0.1.0"
 
 [node name="ConfirmNewDialog" type="ConfirmationDialog" parent="." unique_id=604849412]
+oversampling_override = 1.0
 title = "dialog.confirm_new_title"
 size = Vector2i(420, 160)
 ok_button_text = "dialog.ok"

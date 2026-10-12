@@ -121,7 +121,16 @@ public partial class PlayerCamera : Node3D
     {
         var dt=(float)delta;
 
-        TargetYaw-=Input.GetAxis(YawRightAction,YawLeftAction)*YawSpeed*dt;
+        float inputRotation;
+        if(GetViewport().IsInputHandled())
+        {
+            inputRotation=0;
+        }
+        else
+        {
+            inputRotation=Input.GetAxis(YawRightAction,YawLeftAction);
+        }
+        TargetYaw-=inputRotation*YawSpeed*dt;
         TargetRadius=Mathf.Clamp(TargetRadius-Input.GetAxis(RadiusOutAction,RadiusInAction)*RadiusSpeed*dt,MinRadius,MaxRadius);
 
         Yaw=Mathf.Lerp(Yaw,TargetYaw,EaseWeight(YawEaseSpeed,dt));

@@ -12,7 +12,7 @@ namespace Kast.Godot;
 /// 字符约定与 <see cref="GridHelper"/> / <c>Tokenizer</c> 一致：<see cref="FirstDir"/> 是起笔的
 /// <b>绝对</b>方向，<see cref="Angles"/> 里后续每一笔都是相对上一笔的<b>转折</b>。
 /// 之所以把首笔单独拎出来，是因为起笔方向随玩家画的方向自由变化，而词形本身只约束
-/// 相对转角——首笔即"根旋转"（见 <c>NDictEntry.Init</c> 的 <c>rootRotation</c>）。
+/// 相对转角——首笔即"根旋转"（见 <c>NSpellEntry.Init</c> 的 <c>rootRotation</c>）。
 /// <para>
 /// <see cref="FirstDir"/> 为空字符 <c>'\0'</c> 表示这一槽还是空的（见 <see cref="HasFirstDir"/>）；
 /// <c>' '</c> 是另一回事：那是"词典里自己慢慢转"的展示用值，见 <c>NDictionary.Open</c>。
@@ -79,5 +79,15 @@ public class Spell
     {
         FirstDir='\0';
         Angles.Clear();
+    }
+
+    /// <summary>
+    /// 只取 <see cref="Angles"/> 拼成字符串，<b>不含</b> <see cref="FirstDir"/>——
+    /// 词形本身只由相对转角构成，根旋转是每个槽各自选的，所以这里正好是"词"的规范形式。
+    /// 词典登记、查表都以它作键。
+    /// </summary>
+    internal string AsString()
+    {
+        return new string(Angles.ToArray());
     }
 }

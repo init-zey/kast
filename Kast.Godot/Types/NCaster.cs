@@ -23,10 +23,14 @@ public partial class NCaster : NObjectType3D
     ];
 
     [Export] public AnimationTree AnimationTree;
-    /// <summary><see cref="CheckSpellInput"/> 的返回值：输入的串读不出完整咒语，槽位没有改动。</summary>
+
+
+    /// <summary><see cref="CheckSpell"/> 的返回值：输入的串读不出完整咒语，槽位没有改动。</summary>
     public const int SpellInputRejected=-1;
-    /// <summary><see cref="CheckSpellInput"/> 的返回值：空输入（这次不施法）。</summary>
+    /// <summary><see cref="CheckSpell"/> 的返回值：空输入（这次不施法）。</summary>
     public const int SpellInputCancelled=-2;
+    /// <summary><see cref="CheckSpell"/> 的返回值：输入的串能读成完整咒语。</summary>
+    public const int SpellInputAccept=0;
     
     public override void NodeReady()
     {
@@ -59,6 +63,7 @@ public partial class NCaster : NObjectType3D
         if(spells.Count==0) return false;
         return NGame.Instance.CastWords([..spells],Object,targets);
     }
+    /// <summary>清空指定槽。</summary>
     public bool ClearSlot(int index)
     {
         var i=index;
@@ -66,21 +71,20 @@ public partial class NCaster : NObjectType3D
         return true;
     }
     /// <summary>
-    /// 返回写入的槽位下标 0..8；读不出完整咒语返回 <see cref="SpellInputRejected"/>（槽位不变）；
-    /// 空输入返回 <see cref="SpellInputCancelled"/>（按现有语义它会清掉当前槽）。
+    /// 判断画出来的串能否填进槽：能读成完整咒语返回 <see cref="SpellInputAccept"/>；
+    /// 读不出完整咒语返回 <see cref="SpellInputRejected"/>（槽位不变）；
+    /// 空输入返回 <see cref="SpellInputCancelled"/>。本方法不改动槽位数据，由调用方按返回值决定。
     /// </summary>
-    public int CheckSpellInput(Spell input,int idx)
+    public int CheckSpell(Spell input)
     {
         if (input==null)
         {
-            // 空输入 = 这次不施法：清掉当前槽。注意这不是空操作，当前槽里存的东西会没
-            ClearSlot(idx);
             return SpellInputCancelled;
         }
         if(ReadSpells(input).Count==0)
         {
             return SpellInputRejected;
         }
-        return idx;
+        return SpellInputAccept;
     }
 }

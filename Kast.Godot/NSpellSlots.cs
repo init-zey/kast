@@ -1,7 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
 using Godot;
-using Kast.Core;
 
 namespace Kast.Godot;
 
@@ -9,49 +7,35 @@ namespace Kast.Godot;
 public partial class NSpellSlots : Control
 {
     [Export] public Control Grid;
-    [Export] public Color SlotColor=Colors.White;
     [Export] public Color EmptyColor=new(1f,1f,1f,0.25f);
-    [Export] public Color ActiveColor=Colors.Yellow;
-    [Export] public Color ActiveFill=new(1f,1f,1f,0.08f);
     [Export(PropertyHint.Range,"8,128,1")] public float SlotSize=56f;
 
-    NSpellSymbol[] Symbols;
+    public NSpellSymbolSlot[] Slots;
     /// <summary>当前选中的槽位，0..8。</summary>
     public int Slot=-1;
     public NCaster Caster;
 
-    private NSpellSymbol CreateSlot(int number)
+    private NSpellSymbolSlot CreateSlot(int number,Spell spell)
     {
         var size=new Vector2(SlotSize,SlotSize);
-        var slot=new PanelContainer
-        {
-            CustomMinimumSize=size,
-            TooltipText=$"{number}",
-        };
-        slot.AddThemeStyleboxOverride("panel", (StyleBox)GD.Load<StyleBoxFlat>("res://Materials/SlotBox.tres").Duplicate());
 
         var symbol=new NSpellSymbol
         {
             CustomMinimumSize=size,
             MouseFilter=MouseFilterEnum.Ignore,
-            EdgeWidth=2
+            EdgeWidth=2,
+        };
+        symbol.SetSpell(spell);
+        var slot=new NSpellSymbolSlot
+        {
+            Symbol=symbol,
+            SlotType=SlotType.Sentence,
+            CustomMinimumSize=size,
+            Translation=SaveSystem.Current.PlayerTranslation
         };
         slot.AddChild(symbol);
-
-        var label=new Label
-        {
-            Text=$"{number}",
-            HorizontalAlignment=HorizontalAlignment.Right,
-            VerticalAlignment=VerticalAlignment.Top,
-        };
-        label.AddThemeFontSizeOverride("font_size",12);
-        label.AddThemeColorOverride("font_color",new Color(1f,1f,1f,0.6f));
-        label.SetAnchorsPreset(LayoutPreset.TopRight);
-        label.MouseFilter=MouseFilterEnum.Ignore;
-        slot.AddChild(label);
-
         Grid.AddChild(slot);
-        return symbol;
+        return slot;
     }
 
     /// <summary>按当前施法者的九个槽位与选中项重画。</summary>
@@ -113,22 +97,8 @@ public partial class NSpellSlots : Control
     /// <summary>切换当前槽位（滚轮/数字键都走这里），会环绕。</summary>
     public void SelectSlot(int index)
     {
-        if(Slot>-1)
-        {
-            var prevSymbol=Symbols[Slot];
-            prevSymbol.Modulate=SlotColor;
-            var prevSlot=prevSymbol.GetParent<PanelContainer>();
-            var prevStyle=(StyleBoxFlat)prevSlot.GetThemeStylebox("panel");
-            prevStyle.BorderColor=new Color(1f,1f,1f,0.15f);
-            prevStyle.BgColor=new Color(0f,0f,0f,0.35f);
-        }
         Slot=Mathf.PosMod(index,Caster.Spells.Length);
-        var symbol=Symbols[Slot];
-        symbol.Modulate=ActiveColor;
-        var slot=symbol.GetParent<PanelContainer>();
-        var style=(StyleBoxFlat)slot.GetThemeStylebox("panel");
-        style.BorderColor=new Color(ActiveColor.R,ActiveColor.G,ActiveColor.B,0.9f);
-        style.BgColor=ActiveFill;
+        NGame.Instance.SetSelectedSymbolSlot(Slots[Slot]);
     }
 
     /// <summary>滚轮切换：delta 为正往下一个槽。</summary>
@@ -147,30 +117,27 @@ public partial class NSpellSlots : Control
     {
         Helper.ClearChild(Grid);
         Caster=caster;
-        Symbols=new NSpellSymbol[Caster.Spells.Length];
+        Slots=new NSpellSymbolSlot[Caster.Spells.Length];
         for(int i=0;i<Caster.Spells.Length;i++)
         {
-            var sym=CreateSlot(i+1);
-            Symbols[i]=sym;
-            sym.SetSpell(caster.Spells[i]);
+            Slots[i]=CreateSlot(i+1,caster.Spells[i]);
         }
-        if(Symbols.Length>0)
+        if(Slots.Length>0)
         {
             SelectSlot(0);
         }
     }
-    /// <summary>每物理帧按槽里是否已有起笔刷新"空槽"灰显，使画完/清空能立刻反映到界面上。</summary>
-    public void _PhysicsProcess()
-    {
-        if(Symbols==null)
-        {
-            return;   // 还没 SetCaster：场景刚加载的头几帧
-        }
-        for(int i=0;i<Symbols.Length;i++)
-        {
-            var sym=Symbols[i];
-            var slot=sym.GetParent<PanelContainer>();
-            slot.Modulate=sym.Spell.HasFirstDir?Colors.White:EmptyColor;
-        }
-    }
+    // /// <summary>每物理帧按槽里是否已有起笔刷新"空槽"灰显，使画完/清空能立刻反映到界面上。</summary>
+    // public void _PhysicsProcess()
+    // {
+    //     if(Slots==null)
+    //     {
+    //         return;   // 还没 SetCaster：场景刚加载的头1帧
+    //     }
+    //     for(int i=0;i<Slots.Length;i++)
+    //     {
+    //         var slot=Slots[i];
+    //         slot.Modulate=slot.Symbol.Spell.HasFirstDir?Colors.White:EmptyColor;
+    //     }
+    // }
 }

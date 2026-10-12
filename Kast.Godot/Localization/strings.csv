@@ -4,8 +4,8 @@ spell_state.ready,Ready to cast,可以施法
 spell_state.wrong,Wrong spell,咒语错误
 spell_state.ambiguity,Ambiguous spell,咒语有歧义
 spell_state.crack,Cracked,破碎
-,,
-,,
+info.contains,It contains {0},包含{0}
+info.contained,It's contained by {0},被{0}包含
 menu.continue,Continue,继续游戏
 menu.new_game,New Game,新游戏
 menu.settings,Settings,设置
@@ -28,3 +28,8 @@ dialog.confirm_new_body,The existing save will be deleted and a new world seed w
 language.en,English,English
 language.zh_CN,简体中文,简体中文
 btn.keybinding,KeyBinding,设置键位
+pause.title,Paused,已暂停
+pause.resume,Resume,返回游戏
+pause.quit,"Save and Return To Menu",保存并返回
+pause.quit_confirm_title,Return to menu?,返回菜单？
+pause.quit_confirm_body,"World will reset and you will return to the main menu. This cannot be undone.","世界会被重置，然后返回菜单。此操作不可撤销。"

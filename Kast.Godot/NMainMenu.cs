@@ -194,13 +194,14 @@ public partial class NMainMenu : Control
     void StartNewGame()
     {
         SaveSystem.DeleteSave();
-        SaveSystem.SaveProgress(new Progress
+        SaveSystem.Current=new Progress
         {
             Seed=0,
             // Seed=(int)(GD.Randi()&0x7FFFFFFF),
             PlayerTranslation=new(),
             LevelID="1"
-        });
+        };
+        SaveSystem.SaveProgress();
         GetTree().ChangeSceneToFile(GameScene);
     }
 

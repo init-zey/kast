@@ -15,10 +15,10 @@ public static class SaveSystem
     public const string SettingsPath="user://settings.sav";
 
     static readonly MessagePackSerializerOptions Options=MessagePackSerializerOptions.Standard
-        .WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance);
+        .WithResolver(MessagePack.Resolvers.StandardResolver.Instance);
 
     /// <summary>进程内缓存的进度存档，避免每次读盘。</summary>
-    public static Progress Current{get;private set;} = null;
+    public static Progress Current = null;
 
     /// <summary>最近一次读档是否因文件损坏而失败；用于让菜单禁用“继续”并给出提示。</summary>
     public static bool LoadFailed{get;private set;}
@@ -73,18 +73,13 @@ public static class SaveSystem
     }
 
     /// <summary>写入进度存档，并更新 <see cref="Current"/>。</summary>
-    public static bool SaveProgress(Progress progress)
+    public static bool SaveProgress()
     {
-        if(progress==null)
-        {
-            return false;
-        }
-        Current=progress;
         LoadFailed=false;
         byte[] bytes;
         try
         {
-            bytes=MessagePackSerializer.Serialize(progress,Options);
+            bytes=MessagePackSerializer.Serialize(Current,Options);
         }
         catch(Exception e)
         {

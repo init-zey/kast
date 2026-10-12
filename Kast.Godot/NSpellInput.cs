@@ -1,28 +1,54 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using Kast.Core;
 using Kast.Godot;
 
+/// <summary>
+/// 画咒语的输入层：右键按住拖动，按六边形网格把鼠标轨迹吸附成一笔笔方向，
+/// 实时给出候补预览与转写，松开右键提交到当前选中的槽位。
+/// </summary>
+/// <remarks>
+/// 只在 <c>NGame.SelectedSymbolSlot</c> 非空时工作，目标槽位取自该选中项，
+/// 因此咒语槽与词典条目共用同一套作画界面。
+/// <para>
+/// 一笔的判定是"取离当前位置最近的网格方向"（<see cref="GridHelper.Vecs"/>），
+/// 而不是等距离达到整格——手感上更跟手，见 <c>_GuiInput</c> 里的 <c>minlen</c> 比较。
+/// </para>
+/// </remarks>
 public partial class NSpellInput : ColorRect
 {
     [Export] public NSpellSymbol Symbol;
+    /// <summary>候补预览的容器，每次预测结果变化时重建。</summary>
     [Export] public Control Predictions;
     /// <summary>屏幕上方实时显示"当前输入逐词翻译并拼接"的标签。</summary>
     [Export] public Label Transcript;
-    public Dictionary<string,NDictEntry> PredictionItems=new();
-    const float GridSize=40;
-
+    /// <summary>当前显示的候补条目，按词形索引，用于复用而不必每次重建场景。</summary>
+    public Dictionary<string,NSpellEntry> PredictionItems=new();
+    const float GridSize=80;
+    /// <summary>当前这一笔尚未吸附到某个网格方向前的累计位移。</summary>
     Vector2 Accumulate;
+    /// <summary>已画部分的屏幕原点，随每一笔推进。</summary>
     Vector2 Origin;
+    /// <summary>正在编辑的咒语，直接引用选中槽里的实例，所以改动即时落到槽上。</summary>
     Spell Result;
+    /// <summary>本次输入所用的翻译表（词典里画新词时可能是未写回的副本）。</summary>
+    GameTranslation Translation;
     Prediction Prediction;
+    /// <summary>每一笔的绝对方向，供候补预览回推词条的根旋转（见 <see cref="RootRotation"/>）。</summary>
     List<int> TailAngles=new();
     // List<(int x,int y)> AxisPoints=new();
-    public override void _UnhandledInput(InputEvent @event)
+    /// <summary>
+    /// 起笔：右键按下且当前没在画时，绑定到选中槽位并清空它的内容开始重画；
+    /// Esc（<c>deselect</c>）放弃时连同槽里已有的数据一起清掉。
+    /// </summary>
+    public override void _Input(InputEvent @event)
     {
-        // 画到一半放弃：Esc 关掉界面，不动槽里已有的数据
-        if(Visible&&@event.IsActionPressed("ui_cancel"))
+        if(NGame.Instance.SelectedSymbolSlot==null) return;
+        // 画到一半放弃：Esc 关掉界面，清空槽里已有的数据
+        if(Visible&&@event.IsActionPressed("deselect"))
         {
+            Result.Clear();
             Visible=false;
             Modulate=Colors.White;
             GetViewport().SetInputAsHandled();
@@ -32,12 +58,14 @@ public partial class NSpellInput : ColorRect
         {
             if(mouse.Pressed&&!Visible)
             {
+                if(NGame.Instance.SelectedSymbolSlot==null) return;
                 Visible=true;
-                Result=NGame.Instance.SpellSlots.Caster.Spells[NGame.Instance.SpellSlots.Slot];
+                Result=NGame.Instance.SelectedSymbolSlot.Symbol.Spell;
+                Translation=NGame.Instance.SelectedSymbolSlot.Translation;
+                Prediction=NGame.Instance.PlayerTokenzier.CreatePrediction();
                 Symbol.Spell=Result;
                 Modulate=Colors.White;
                 Accumulate=new();
-                Prediction.Reset();
                 Result.Clear();
                 Helper.ClearChild(Predictions);
                 PredictionItems.Clear();
@@ -127,22 +155,33 @@ public partial class NSpellInput : ColorRect
     }
 
     /// <summary>
-    /// 提交当前画出来的串。<see cref="NCaster.CheckSpellInput"/> 说读不出完整咒语时**不关界面**：
+    /// 提交当前画出来的串。<see cref="NCaster.CheckSpell"/> 说读不出完整咒语时**不关界面**：
     /// 整体染红、已经画的笔画留着，玩家可以接着补笔画再松手重试；按 Esc 放弃。
     /// 成功（或空输入取消）才关界面并清掉提示色。
+    /// <para>
+    /// 只有"整句"槽（<see cref="SlotType.Sentence"/>）才做完整性校验；词典里画的是单个词，
+    /// 允许先画一半再补，所以直接接受。
+    /// </para>
     /// </summary>
     void Commit()
     {
-        var result=NGame.Instance.SpellSlots.Caster.CheckSpellInput(Result,NGame.Instance.SpellSlots.Slot);
-        if(result==NCaster.SpellInputRejected)
+        if(NGame.Instance.SelectedSymbolSlot.SlotType==SlotType.Sentence)
         {
-            Modulate=Colors.Red;
-            return;
+            var result=NGame.Instance.SpellSlots.Caster.CheckSpell(Result);
+            if(result==NCaster.SpellInputRejected)
+            {
+                Modulate=Colors.Red;
+                return;
+            }
         }
         Visible=false;
         Modulate=Colors.White;
     }
 
+    /// <summary>
+    /// 重建候补列表：只保留"接着画就能得到"的候补，并尽量复用上一轮的条目节点
+    /// （按词形匹配），避免每次鼠标移动都重新实例化场景。
+    /// </summary>
     private void UpdatePredictions()
     {
         var predictionMatches=Prediction.PredictionResult;
@@ -158,7 +197,7 @@ public partial class NSpellInput : ColorRect
             {
                 continue;
             }
-            NDictEntry item;
+            NSpellEntry item;
             if(prevPredictionItems.TryGetValue(match.Token,out var reused))
             {
                 prevPredictionItems.Remove(match.Token);
@@ -166,7 +205,8 @@ public partial class NSpellInput : ColorRect
             }
             else
             {
-                item=Helper.LoadScene<NDictEntry>("DictEntry",n=>Predictions.AddChild(n));
+                item=Helper.LoadScene<NSpellEntry>("SpellEntry",n=>Predictions.AddChild(n));
+                item.Translation=Translation;
             }
             if(item is null)
             {
@@ -175,7 +215,7 @@ public partial class NSpellInput : ColorRect
             PredictionItems[match.Token]=item;
             // 每一条都要重摆一次：这一截变长、或者落回词条里的另一个位置，朝向都得跟着变，
             // 所以复用的条目也要重新 Init，不能只在新建时摆一次
-            item.Init(RootRotation(match),match.Token);
+            item.Init(null,new Spell{FirstDir=RootRotation(match),Angles=match.Token.ToList()});
             Predictions.MoveChild(item,index++);
         }
         foreach(var prevItem in prevPredictionItems.Values)
@@ -191,34 +231,37 @@ public partial class NSpellInput : ColorRect
     /// </summary>
     char RootRotation(PredictionMatch match)
         =>GridHelper.Chars[match.RootAngle(TailAngles[^match.MatchedLength],GridHelper.Chars)];
+    /// <summary>铺一层半透明黑底，让画出来的笔画在游戏画面上看得清。</summary>
     public override void _Draw()
     {
         DrawRect(GetRect(),new(0,0,0,0.5f));
         
     }
+    /// <summary>初始化：格距、六边形着色器参数，并监听尺寸变化。</summary>
     public override void _Ready()
     {
         Result=null;
         Symbol.EdgeLength=GridSize;
         ((ShaderMaterial)Material).SetShaderParameter("hex_size", GridSize*0.577350269189626f);
         Resized += ()=>UpdateSize();
-        Prediction=NGame.Instance.PlayerTokenzier.CreatePrediction();
     }
 
     /// <summary>把当前输入（可以是不完整语句）逐词翻译后显示在屏幕上方。</summary>
     private void UpdateTranscript()
     {
-        var text=NGame.Instance.Transcript(new string(Result.Angles.ToArray()));
+        var text=NGame.Instance.Transcript(Result.AsString());
         Transcript.Visible=text.Length>0;
         Transcript.Text=text;
     }
 
+    /// <summary>把控件尺寸同步给着色器，使网格铺满整块输入区。</summary>
     private void UpdateSize()
     {
         ((ShaderMaterial)Material).SetShaderParameter("node_size", Size);
     }
 
 
+    /// <summary>把当前绘制原点同时写进着色器与词形符号。</summary>
     void SetOrigin(Vector2 origin)
     {
         ((ShaderMaterial)Material).SetShaderParameter("offset",origin);

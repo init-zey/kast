@@ -29,8 +29,19 @@ public partial class NGame : Node3D
     [Export] NLevel CurrentLevel;
     [Export] GpuParticles3D Particles;
     [Export] public NSpellSlots SpellSlots;
-    /// <summary>玩家侧分词器：只编译玩家已解锁的词条，供分词的实时显示与提交校验使用。</summary>
-    public Tokenizer PlayerTokenzier=new();
+    /// <summary>词典面板，暂停菜单与快捷键都会用到。</summary>
+    [Export] public NDictionary PlayerDict;
+    /// <summary>暂停菜单，Esc 时切换。</summary>
+    [Export] public NPauseMenu PauseMenu;
+    /// <summary>
+    /// 玩家侧分词器：只编译玩家已解锁的词条，供分词的实时显示与提交校验使用。
+    /// 直接取自存档里的翻译表，后者在词条增删时已就地重编译（见 <see cref="GameTranslation"/>），
+    /// 所以这里不需要再维护第二份。
+    /// </summary>
+    public Tokenizer PlayerTokenzier=>SaveSystem.Current.PlayerTranslation.Tokenizer;
+    /// <summary>当前被选中（高亮、可编辑）的槽位或词条，没有选中时为 null。</summary>
+    internal NSpellSymbolSlot SelectedSymbolSlot;
+
     /// <summary>
     /// 按存档装配一局游戏：建词形分配器、装文法与玩法词、编译玩家分词器、加载关卡。
     /// 由 <see cref="_EnterTree"/> 在读到存档时调用。
@@ -166,7 +177,6 @@ public partial class NGame : Node3D
         // Alphabet=Alphabet.Derive(Alphabet.GetKeys());//FIXME:DEBUG
         // File.WriteAllText("words.csv",DB.Translation.AsText());//FIXME:DEBUG
         LoadLevel(pg.LevelID);
-        OnUpdatedTranslation();
     }
 
     /// <summary>
@@ -222,7 +232,7 @@ public partial class NGame : Node3D
 
     /// <summary>
     /// 把输入里已经成词的完整 token 逐个翻译成真实单词并拼接，供 SpellInput 顶部实时显示。
-    /// 末尾没画完的残片不显示；分词走的是和提交（<see cref="NCaster.CheckSpellInput"/>）完全同一套规则
+    /// 末尾没画完的残片不显示；分词走的是和提交（<see cref="NCaster.CheckSpell"/>）完全同一套规则
     /// （<see cref="Tokenizer.TokenizePrefix"/>：逐段最长匹配），
     /// 所以界面上显示的词序就是提交时会被接受的那一种，不会再出现"显示成词却填不进槽"。
     /// </summary>
@@ -297,12 +307,39 @@ public partial class NGame : Node3D
         CurrentLevel=Helper.LoadScene<NLevel>($"Levels/{id}");
         AddChild(CurrentLevel);
     }
-    /// <summary>
-    /// 玩家解锁新词后重建分词表。词条表变了，之前取出的预测器会作废
-    /// （见 <see cref="Tokenizer.CompileTokens"/>），<c>NSpellInput</c> 需重新获取。
-    /// </summary>
-    public void OnUpdatedTranslation()
+
+    /// <summary>把词典面板编辑好的词表写回存档（整体覆盖）。</summary>
+    internal void SetTranslation(GameTranslation translation)
     {
-        PlayerTokenzier.CompileTokens(SaveSystem.Current.PlayerTranslation.Tokens);
+        SaveSystem.Current.PlayerTranslation.Copy(translation);
+    }
+
+    /// <summary>切换当前选中的槽位/词条：旧的取消高亮，新的高亮，传 null 表示取消选择。</summary>
+    public void SetSelectedSymbolSlot(NSpellSymbolSlot slot)
+    {
+        if(SelectedSymbolSlot!=null)
+        {
+            SelectedSymbolSlot.Deactive();
+        }
+        SelectedSymbolSlot=slot;
+        if(slot!=null)
+        {
+            slot.Active();
+        }
+    }
+
+    /// <summary>把选择切回九个快捷键槽里当前那一个（关掉词典面板时用）。</summary>
+    public void SelecteSlotFromSlots()
+    {
+        SetSelectedSymbolSlot(SpellSlots.Slots[SpellSlots.Slot]);
+    }
+    /// <summary>Esc 切换暂停菜单。</summary>
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if(@event.IsActionPressed("ui_cancel"))
+        {
+            PauseMenu.Toggle();
+            GetViewport().SetInputAsHandled();
+        }
     }
 }
