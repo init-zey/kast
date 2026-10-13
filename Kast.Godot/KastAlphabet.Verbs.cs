@@ -92,9 +92,9 @@ public partial class KastAlphabet
             if(o!=null)
             {
                 var value=o(ctx.WithFlag("#be"));
-                if(value is string typeid)
+                if(value is NObjectType type)
                 {
-                    subject.SetType(typeid);
+                    subject.SetType(type);
                 }
                 else if(value is Action<NObject> converter)
                 {

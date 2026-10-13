@@ -9,9 +9,11 @@ resource_local_to_scene = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ll43v"]
 
-[node name="Cube" type="CollisionShape3D" unique_id=1528775501]
-shape = SubResource("BoxShape3D_udksl")
+[node name="Cube" type="Node3D" unique_id=1165722823]
 script = ExtResource("1_rm4hj")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1528775501]
+shape = SubResource("BoxShape3D_udksl")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1891264718]
 mesh = SubResource("BoxMesh_udksl")

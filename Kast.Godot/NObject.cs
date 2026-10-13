@@ -1,44 +1,106 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace Kast.Godot;
 
 public partial class NObject : RigidBody3D
 {
-    public string TypeID;
-    public NObjectType Type;
+    [Export] public NObjectType Type;
     float TurnSpeed=8f;
-    [Signal] public delegate void MassChangedEventHandler(int mass);
     [Export] GpuParticlesAttractorSphere3D ParticleAttractor;
     private double attractorEnableTimer=0;
-
-
-    public new void SetMass(float mass)
+    /// <summary>当前类型搬到本刚体名下的碰撞体，换类型时按这张表回收。</summary>
+    readonly List<CollisionShape3D> typeCollisionShapes=new();
+    /// <summary>本刚体当前所在的水体（由 <see cref="FluidArea3D"/> 登记）。求解器归类型所有，换类型时要转交给新类型。</summary>
+    public FluidArea3D CurrentFluidArea;
+    /// <summary>有采样点刚入水时触发，参数是该采样点在刚体坐标系下的位置。</summary>
+    [Signal] public delegate void EnteredToFluidEventHandler(Vector3 position);
+    /// <summary>有采样点刚出水时触发，参数同上。</summary>
+    [Signal] public delegate void ExitedToFluidEventHandler(Vector3 position);
+    public void UpdateMass()
     {
-        if(mass < 0)
-        {
-            QueueFree();
-        }
-        var prevMass=mass;
-        Mass=mass;
-        Type.OnSetMass(prevMass,mass);
-        EmitSignal(SignalName.MassChanged,mass);
+        Mass=Type.Scale.Dot(Type.Scale)*Type.Density;
     }
-    public void SetType(string typeid)
+    public void SetType(NObjectType type)
     {
-        if(typeid==TypeID) return;
-        TypeID=typeid;
+        if(type==Type) return;
         if(Type!=null)
         {
+            ClearTypeCollisionShapes();
+            RemoveChild(Type);
             Type.QueueFree();
         }
-        Type=Helper.LoadScene<NObjectType>($"Types/{typeid}");
+        Type=type;
         Type.Object=this;
+        var prevParent=Type.GetParentOrNull<Node>();
+        if(prevParent!=null)
+        {
+            prevParent.RemoveChild(Type);
+        }
+        Type.Position=new();
+        Type.Rotation=new();
         AddChild(Type);
         foreach(var child in Type.GetChildren())
         {
-            if(child is CollisionShape3D)
+            if(child is CollisionShape3D collision)
             {
-                child.Reparent(this);
+                collision.Reparent(this);
+                typeCollisionShapes.Add(collision);
+            }
+        }
+        InitFloaters();
+        // 泡在水里时换类型：body_entered 不会再响一次，必须把当前水体补给新类型的求解器，
+        // 否则新求解器的 FluidArea 一直是 null，浮力从此失效
+        if(CurrentFluidArea!=null)
+        {
+            Type.FluidInteractor.FluidAreaEnter(CurrentFluidArea);
+        }
+        UpdateMass();
+    }
+
+    /// <summary>
+    /// 立刻摘掉上一批从类型节点搬过来的碰撞体。
+    /// 必须先 <see cref="Node.RemoveChild"/> 再 <see cref="Node.QueueFree"/>：QueueFree 要等到帧末才生效，
+    /// 只靠它的话同一帧里的 <see cref="InitFloaters"/> 还会把这些旧碰撞体扫成采样点。
+    /// </summary>
+    void ClearTypeCollisionShapes()
+    {
+        foreach(var collision in typeCollisionShapes)
+        {
+            if(!IsInstanceValid(collision))
+            {
+                continue;
+            }
+            if(collision.GetParent()==this)
+            {
+                RemoveChild(collision);
+            }
+            collision.QueueFree();
+        }
+        typeCollisionShapes.Clear();
+    }
+
+    /// <summary>
+    /// 按挂在刚体下的碰撞体外形重建浮力采样点与排水体积。
+    /// 换类型（<see cref="SetType"/>）会换掉整批碰撞体，所以每次换完都要重建一次。
+    /// </summary>
+    public void InitFloaters()
+    {
+        // 同一个类型实例只装配一次：重复调用会把采样点与排水体积重复累加
+        if(Type.IsFloaterInited) return;
+        Type.IsFloaterInited=true;
+        if(!Type.UseCollisionShapes)
+        {
+            return;
+        }
+        var toBodyLocal=GlobalTransform.AffineInverse();
+        foreach(uint ownerId in GetShapeOwners())
+        {
+            // 只认还在场景树里的碰撞体：摘掉的碰撞体会在 shape owner 里留个空壳
+            if(ShapeOwnerGetOwner(ownerId) is CollisionShape3D collision&&collision.IsInsideTree())
+            {
+                // 采样点要落在刚体坐标系里：碰撞体嵌在类型子节点下时，父级局部变换并不等于刚体局部变换
+                Type.FluidInteractor.AddCollisionShape(collision,toBodyLocal*collision.GlobalTransform);
             }
         }
     }
@@ -75,6 +137,7 @@ public partial class NObject : RigidBody3D
     }
     public override string ToString()
     {
+        if(Type==null) return $"{Name}<null>";
         return $"{Name}<{Type.Name}>";
     }
     public override void _Ready()
@@ -101,6 +164,60 @@ public partial class NObject : RigidBody3D
                 ParticleAttractor.Strength=0;
             }
         }
+
+        ProcessFluid(delta);
+    }
+
+    /// <summary>
+    /// 浮力：先让求解器按当前姿态算一次，再播报采样点的入水/出水，最后施力并调阻尼。
+    /// 不在水中时把阻尼清回 0——这是原插件的做法，会覆盖别处设的阻尼值。
+    /// </summary>
+    private void ProcessFluid(double delta)
+    {
+        Type.FluidInteractor.Process(GlobalTransform,Mass,GravityScale);
+        foreach(var floater in Type.FluidInteractor.Floaters)
+        {
+            if(floater.IsJustEnteredToFluid())
+            {
+                EmitSignal(SignalName.EnteredToFluid,floater.Position);
+            }
+            if(floater.IsJustExitedFromFluid())
+            {
+                EmitSignal(SignalName.ExitedToFluid,floater.Position);
+            }
+        }
+
+        if(!Type.FluidInteractor.FloatForce.IsZeroApprox())
+        {
+            // Bouyancy
+            // 沿用原插件：浮力再乘一次 delta。Godot 的 ApplyForce 本身已按帧长积分，这里等于多乘一次
+            ApplyForce(Type.FluidInteractor.FloatForce,Type.FluidInteractor.FloatPosition);
+            // Damping
+            LinearDamp=Type.FluidDamp;
+            AngularDamp=Type.FluidDamp;
+        }
+        else
+        {
+            LinearDamp=0f;
+            AngularDamp=0f;
+        }
+    }
+
+    /// <summary>由 <see cref="FluidArea3D"/> 在本刚体进入水体时调用。</summary>
+    public void FluidAreaEnter(FluidArea3D area)
+    {
+        CurrentFluidArea=area;
+        Type.FluidInteractor.FluidAreaEnter(area);
+    }
+
+    /// <summary>由 <see cref="FluidArea3D"/> 在本刚体离开水体时调用。</summary>
+    public void FluidAreaExit(FluidArea3D area)
+    {
+        if(CurrentFluidArea==area)
+        {
+            CurrentFluidArea=null;
+        }
+        Type.FluidInteractor.FluidAreaExit(area);
     }
 
 }

@@ -13,37 +13,60 @@ namespace Kast.Godot;
 /// </remarks>
 public partial class NLevel : Node3D
 {
-    /// <summary>本关卡里的全部刚体。</summary>
-    public HashSet<NObject> Objects=new();
     /// <summary>本关卡的玩家对象（由 <see cref="Spawn"/> 生成的施法者）。</summary>
     public NObject Player;
     /// <summary>本关卡的相机，也是输入控制端。</summary>
     public PlayerCamera Camera;
     /// <summary>
-    /// 生成一个刚体并挂到本关卡下。质量直接由调用方给出；
-    /// <paramref name="transform"/> 会连同缩放一起被继承（质量已按尺寸换算过，见 <see cref="ScanAndSpawn"/>）。
+    /// 生成一个刚体并挂到本关卡下，用 <paramref name="type"/> 作为它的外观与物理外形。
+    /// 质量由 <see cref="NObject.SetType"/> 按 <c>Density × Scale²</c> 算出，不在这里给。
     /// </summary>
-    public NObject Spawn(string typeid,Transform3D transform,float mass)
+    public NObject Spawn(NObjectType type,Vector3 position,Quaternion quaternion)
     {
-        var obj=new NObject();
-        Objects.Add(obj);
+        var obj = new NObject
+        {
+            Position = position,
+            Quaternion = quaternion
+        };
         AddChild(obj);
-        obj.Transform=transform;
-        obj.SetType(typeid);
-        obj.SetMass(mass);
+        obj.SetType(type);
         return obj;
     }
-    /// <summary>先于 <c>_Ready</c> 把场景里声明式的物体实体化，保证关卡内容在装玩家之前就位。</summary>
-    public override void _EnterTree()
+    /// <summary>
+    /// 取本关卡的出生点：场景里名为 <c>CasterSpanwer</c> 的节点（<c>%</c> 唯一名）。
+    /// 没放这个节点的关卡（例如 <c>island.tscn</c>）退回用关卡原点，不视为错误——
+    /// <c>GetNode</c> 找不到会直接抛异常，那样整个关卡都加载不了。
+    /// </summary>
+    Vector3 SpawnPosition()
     {
-        ScanAndSpawn(this);
+        return GetNodeOrNull<Node3D>("%CasterSpanwer")?.GlobalPosition ?? GlobalPosition;
+    }
+
+    /// <summary>
+    /// 按模板场景造一个类型实例，可选地覆盖密度与缩放。
+    /// 关卡里摆好的物体由 <see cref="ScanAndSpawn"/> 直接复用，不需要走这里。
+    /// </summary>
+    public NObjectType CreateType(float? densityOverride,Vector3? scaleOverride)
+    {
+        var type=Helper.LoadScene<NObjectType>("Types/NCaster");
+        if(densityOverride.HasValue)
+        {
+            type.Density=densityOverride.Value;
+        }
+        if(scaleOverride.HasValue)
+        {
+            type.Scale=scaleOverride.Value;
+        }
+        return type;
     }
     /// <summary>装上相机与玩家，并把施法者交给咒语槽 UI。</summary>
     public override void _Ready()
     {
+        // 先实体化关卡里的物体，再放玩家：玩家落到已就位的地形/物体上
+        ScanAndSpawn(this);
         Camera = Helper.LoadScene<PlayerCamera>("PlayerCamera");
         AddChild(Camera);
-        Player = Spawn("NCaster", Transform3D.Identity, 1);
+        Player = Spawn(CreateType(0.8f, Vector3.One*1f), SpawnPosition(), Quaternion.Identity);
         var caster=(NCaster)Player.Type;
         caster.Spells=SaveSystem.Current.CasterSpells;
         Camera.Player = Player;
@@ -52,9 +75,8 @@ public partial class NLevel : Node3D
     }
 
     /// <summary>
-    /// 深度优先扫描子树，把每个 <see cref="NObjectType"/> 换成运行时的 <see cref="NObject"/>。
-    /// 质量按 <c>Density × Scale²</c> 估算（用点积代替逐轴相乘），并把原节点释放掉，
-    /// 因此场景里只保留"设计态"，运行态由这里的刚体承担。
+    /// 深度优先扫描子树，把关卡里声明式的每个 <see cref="NObjectType"/> 就地转成一个 <see cref="NObject"/>：
+    /// 类型节点被移交给新刚体（见 <see cref="NObject.SetType"/>），因此不再是场景节点的子级。
     /// </summary>
     private void ScanAndSpawn(Node root)
     {
@@ -63,9 +85,7 @@ public partial class NLevel : Node3D
             ScanAndSpawn(child);
             if(child is NObjectType objType)
             {
-                var aabbSize=objType.Scale;
-                Spawn(objType.GetType().Name,objType.Transform,objType.Density*aabbSize.Dot(aabbSize));
-                objType.QueueFree();
+                Spawn(objType,objType.GlobalPosition,objType.Quaternion);
             }
         }
     }

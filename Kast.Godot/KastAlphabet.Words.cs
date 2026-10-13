@@ -33,7 +33,7 @@ public partial class KastAlphabet
             {
                 if(ctx.GetFlag("#be"))
                 {
-                    return MassChanger(-1f);
+                    return DensityChanger(-1f);
                 }
                 return subject(ctx).GetPosition()+Vector3.Up*10f;
             }
@@ -48,7 +48,7 @@ public partial class KastAlphabet
             {
                 if(ctx.GetFlag("#be"))
                 {
-                    return MassChanger(1f);
+                    return DensityChanger(1f);
                 }
                 return subject(ctx).GetPosition()-Vector3.Up*10f;
             }
@@ -71,9 +71,27 @@ public partial class KastAlphabet
     }
 
     /// <summary>
-    /// "成为"的宾语负载：返回一个改质量的委托，由 <c>be</c> 动词交给目标执行。
+    /// "成为"的宾语负载：返回一个逐帧改密度的委托，由 <c>be</c> 动词交给目标执行。
     /// <paramref name="sign"/> 为正是加重（地），为负是减轻（天）。
     /// </summary>
-    O MassChanger(float sign) => (ctx) =>
-        (Action<NObject>)(target => target.SetMass(target.Mass+sign*(float)game.GetPhysicsProcessDeltaTime()));
+    O DensityChanger(float sign) => (ctx) =>
+        (Action<NObject>)(target =>
+        {
+            target.Type.Density=target.Type.Density+sign*(float)game.GetPhysicsProcessDeltaTime();
+            target.UpdateMass();
+        });
+
+    /// <summary>逐帧缩放目标（"变大 / 变小"），并同步由尺寸决定的质量。</summary>
+    /// <remarks>
+    /// 待接词条：目前还没有词条指向它，见 <c>docs/demo-island-feasibility.md</c> 第 5 节第 3 步。
+    /// 已知限制：只改 <see cref="NObjectType.Scale"/>，<b>不会</b>同步碰撞体外形（碰撞体是在
+    /// <see cref="NObject.SetType"/> 里 reparent 过来的那批），缩得很小会出现"看得见、碰不着"。
+    /// 接词条之前需要先把缩放应用到碰撞形状上。
+    /// </remarks>
+    O ScaleChanger(float sign) => (ctx) =>
+        (Action<NObject>)(target =>
+        {
+            target.Type.Scale=target.Type.Scale*(1+sign*(float)game.GetPhysicsProcessDeltaTime());
+            target.UpdateMass();
+        });
 }

@@ -47,9 +47,4 @@ public abstract partial class NObjectType3D : NObjectType
         outlineColor=color;
         Material.SetShaderParameter("outline_color",color);
     }
-    /// <summary>质量变化时按比例缩放整体尺寸，让"更重 = 更大"在视觉上成立。</summary>
-    public override void OnSetMass(float prevMass,float newMass)
-    {
-        Scale*=newMass/prevMass;
-    }
 }

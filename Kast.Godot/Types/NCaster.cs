@@ -24,7 +24,6 @@ public partial class NCaster : NObjectType3D
     
     public override void NodeReady()
     {
-        Object.GravityScale = 0f;
         Object.AxisLockAngularX = true;
         Object.AxisLockAngularZ = true;
     }
