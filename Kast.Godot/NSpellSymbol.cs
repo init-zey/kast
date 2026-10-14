@@ -33,7 +33,7 @@ public partial class NSpellSymbol : Control
         if(Spell==null||!Spell.HasFirstDir) return;
         var points = new List<Vector2>();
         var tail = new Vector2();
-        var rect = GridHelper.GetRect(Spell);
+        var rect = GridHelper.GetRect(Spell.ToArray());
         float k=0;
         float s=0;
         float w=0.8f;

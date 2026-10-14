@@ -19,7 +19,7 @@ public partial class NObject : RigidBody3D
     [Signal] public delegate void ExitedToFluidEventHandler(Vector3 position);
     public void UpdateMass()
     {
-        Mass=Type.Scale.Dot(Type.Scale)*Type.Density;
+        Mass=Scale.Dot(Scale)*Type.Density;
     }
     public void SetType(NObjectType type)
     {
@@ -39,7 +39,11 @@ public partial class NObject : RigidBody3D
         }
         Type.Position=new();
         Type.Rotation=new();
+        Type.Scale=Vector3.One;
         AddChild(Type);
+        AxisLockAngularX=Type.AxisLockAngularXZ;
+        AxisLockAngularZ=Type.AxisLockAngularXZ;
+        Freeze=Type.IsStatic;
         foreach(var child in Type.GetChildren())
         {
             if(child is CollisionShape3D collision)
@@ -174,7 +178,7 @@ public partial class NObject : RigidBody3D
     /// </summary>
     private void ProcessFluid(double delta)
     {
-        Type.FluidInteractor.Process(GlobalTransform,Mass,GravityScale);
+        Type.FluidInteractor.Process(GlobalTransform,Mass,1);
         foreach(var floater in Type.FluidInteractor.Floaters)
         {
             if(floater.IsJustEnteredToFluid())

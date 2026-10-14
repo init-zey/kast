@@ -43,6 +43,7 @@ public partial class KastAlphabet : Alphabet<O>
         AddNouns();
         AddVerbs();
         AddNumerals();
+        AddObjectTypes();
     }
 
     // —— 文法 ——
@@ -100,7 +101,7 @@ public partial class KastAlphabet : Alphabet<O>
            ?? throw new InvalidOperationException("名词没有绑定对象");
 
     /// <summary>句子：主语先求值并绑成 .s，再执行谓词。</summary>
-    static Func<Context, Context> Sentence(object? subject, object? predicate) => NounOf((Context ctx) =>
+    static Func<Context, Context> Sentence(object subject, object predicate) => NounOf((Context ctx) =>
     {
         var inner=new Context(ctx);
         inner.Add(".s",ObjectOf(subject,ctx));

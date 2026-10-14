@@ -96,7 +96,7 @@ public class Spell
     /// 按真实词逐个取出词形，拼接到 <see cref="Angles"/> 上（<b>不动</b> <see cref="FirstDir"/>）。
     /// 用于按"真实词序列"生成咒语，例如开局填入初始咒语、或 <c>display</c> 拼出对象名字。
     /// </summary>
-    public void BuildFromRealWords(string[] realWords,GameTranslation translation)
+    public void BuildFromRealWord(string[] realWords,GameTranslation translation)
     {
         foreach(var realWord in realWords)
         {

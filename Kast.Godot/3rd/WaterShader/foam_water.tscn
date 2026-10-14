@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://b2ljgd074bsd5"]
+
+[ext_resource type="Material" uid="uid://ct4tfb0wwk3vs" path="res://3rd/WaterShader/water_material.tres" id="2_qqaqx"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_ynkkp"]
+size = Vector2(100, 100)
+subdivide_width = 400
+subdivide_depth = 400
+
+[node name="WaterFoam" type="MeshInstance3D" unique_id=87846116]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("QuadMesh_ynkkp")
+surface_material_override/0 = ExtResource("2_qqaqx")

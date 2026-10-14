@@ -159,6 +159,17 @@ public class Database(int seed)
         used.Add(flipped);
         return (token,flipped);
     }
+    public string Combine(string[] realWords, string word)
+    {
+        var sb=new StringBuilder();
+        foreach(var realWord in realWords)
+        {
+            sb.Append(Translation.GetGameWord(realWord));
+        }
+        var result=sb.ToString();
+        Translation.RegisterRealToGame(word,result);
+        return result;
+    }
 
     /// <summary>长度为 <paramref name="length"/> 的候选词形总数：首步 6 选，之后每步 5 选。</summary>
     static long Total(int length)

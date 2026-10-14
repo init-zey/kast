@@ -25,12 +25,12 @@ public static class GridHelper
         lastAngle=GetAngle(lastAngle,c);
         return AngleToVec(lastAngle);
     }
-    public static Rect2 GetRect(Spell spell)
+    public static Rect2 GetRect(IEnumerable<char> spell)
     {
         var rect=new Rect2();
         var p=new Vector2();
         var a=0;
-        foreach(var c in spell.ToArray())
+        foreach(var c in spell)
         {
             p+=CharToVec(ref a,c);
             var dx=rect.Position.X-p.X;

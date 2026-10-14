@@ -59,7 +59,7 @@ public partial class NGame : Node3D
                 FirstDir='w',
                 Angles=new()
             };
-            firstSpell.BuildFromRealWords(["that","you","be","display"],DB.Translation);
+            firstSpell.BuildFromRealWord(["that","you","be","display"],DB.Translation);
             pg.CasterSpells =
             [
                 firstSpell,
@@ -73,7 +73,7 @@ public partial class NGame : Node3D
                 new()
             ];
         }
-        // SaveSystem.Current.PlayerTranslation=DB.Translation;//FIXME:DEBUG
+        SaveSystem.Current.PlayerTranslation=DB.Translation;//FIXME:DEBUG
         // File.WriteAllText("words.csv",DB.Translation.AsText());//FIXME:DEBUG
         LoadLevel(pg.LevelID);
     }

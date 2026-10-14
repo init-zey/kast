@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using Kast.Core;
 using O=System.Func<Kast.Core.Context,object>;
@@ -36,7 +37,7 @@ public partial class KastAlphabet
             if(o!=null)
             {
                 var target=o(ctx);
-                subject.ApplyCentralImpulse((target.GetPosition()-subject.GlobalPosition).Normalized()*0.5f);
+                subject.ApplyCentralImpulse((target.GetPosition()-subject.GlobalPosition).Normalized()*Math.Min(subject.Mass,1.0f));
                 subject.EnableAttractor();
             }
             else
@@ -117,7 +118,7 @@ public partial class KastAlphabet
 
             var symbol=game.GetNode<NDisplaySpellSymbol>("%DisplaySpellSymbol");
             symbol.Spell.Angles.Clear();
-            symbol.Spell.BuildFromRealWords(objType.GetDisplayRealName(),db.Translation);
+            symbol.Spell.Angles=db.Translation.GetGameWord(objType.TypeName).ToList();
             symbol.Modulate=Colors.White;
             symbol.Visible=true;
             symbol.QueueRedraw();

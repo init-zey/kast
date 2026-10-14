@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace Kast.Godot;
@@ -14,9 +15,11 @@ public abstract partial class NObjectType3D : NObjectType
 {
     ShaderMaterial Material=new ShaderMaterial();
     Color outlineColor=Colors.Transparent;
+    List<VisualInstance3D> VisualInstances;
     /// <summary>装配轮廓材质并回调 <see cref="NodeReady"/>；密封以免子类漏掉装配。</summary>
     public sealed override void _Ready()
     {
+        VisualInstances=new();
         Material.Shader=GD.Load<Shader>("res://Shaders/Outline.gdshader");
         SetMaterial(this);
         SetOutlineColor(outlineColor);
@@ -28,6 +31,7 @@ public abstract partial class NObjectType3D : NObjectType
     {
         if(node is MeshInstance3D meshInstance)
         {
+            VisualInstances.Add(meshInstance);
             meshInstance.MaterialOverlay=Material;
         }
         foreach(var child in node.GetChildren())
@@ -44,6 +48,21 @@ public abstract partial class NObjectType3D : NObjectType
     /// <summary>记录颜色并写进着色器，供未瞄准/瞄准/选中几档状态切换。</summary>
     public override void SetOutlineColor(Color color)
     {
+        if(outlineColor==color) return;
+        if(color.A>0)
+        {
+            foreach(var vi in VisualInstances)
+            {
+                vi.Layers=3;
+            }
+        }
+        else
+        {
+            foreach(var vi in VisualInstances)
+            {
+                vi.Layers=1;
+            }
+        }
         outlineColor=color;
         Material.SetShaderParameter("outline_color",color);
     }

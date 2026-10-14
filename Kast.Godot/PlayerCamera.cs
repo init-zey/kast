@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -117,7 +118,7 @@ public partial class PlayerCamera : Node3D
         ApplyCameraTransform();
     }
 
-    public override void _Process(double delta)
+    public void CameraUpdate(double delta)
     {
         var dt=(float)delta;
 
@@ -182,10 +183,11 @@ public partial class PlayerCamera : Node3D
 
         // 转向移动方向
         var targetYaw=Mathf.Atan2(-horizontal.X,-horizontal.Z);
-        var error=Mathf.Wrap(targetYaw-Body.Rotation.Y,-Mathf.Pi,Mathf.Pi);
-        const float TurnSpeed=8f;
-        var desired=Mathf.Clamp(error*TurnSpeed,-TurnSpeed,TurnSpeed);
-        Body.ApplyTorqueImpulse(new Vector3(0f,(desired-Body.AngularVelocity.Y)*Mathf.Max(Body.Inertia.Y,0.01f),0f));
+        // var error=Mathf.Wrap(targetYaw-Body.Rotation.Y,-Mathf.Pi,Mathf.Pi);
+        // const float TurnSpeed=8f;
+        // var desired=Mathf.Clamp(error*TurnSpeed,-TurnSpeed,TurnSpeed);
+        // Body.ApplyTorqueImpulse(new Vector3(0f,(desired-Body.AngularVelocity.Y)*Mathf.Max(Body.Inertia.Y,0.01f),0f));
+        Body.Rotation=new(0,Mathf.LerpAngle(Body.Rotation.Y,targetYaw,0.2f),0);
     }
 
     /// <summary>跟随被操纵对象（只同步位置，不动相机朝向）。</summary>
@@ -278,8 +280,8 @@ public partial class PlayerCamera : Node3D
     private static bool OnFloor(RigidBody3D body)
     {
         var query=PhysicsRayQueryParameters3D.Create(
-            body.GlobalPosition + Vector3.Up * 0.5f,
-            body.GlobalPosition + Vector3.Down * 0.5f,
+            body.GlobalPosition + Vector3.Up * 0.5f * body.Scale.Y,
+            body.GlobalPosition + Vector3.Down * 0.5f * body.Scale.Y,
             body.CollisionMask,
             new global::Godot.Collections.Array<Rid> { body.GetRid() });
         return body.GetWorld3D().DirectSpaceState.IntersectRay(query).Count > 0;

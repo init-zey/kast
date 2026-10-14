@@ -1,0 +1,11 @@
+Model Information:
+* title:	low-poly Tree
+* source:	https://sketchfab.com/3d-models/low-poly-tree-c174a97481c84cd1a6953d3e0bfe3d7f
+* author:	AAV's 3D Models (https://sketchfab.com/AAV_s_models)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "low-poly Tree" (https://sketchfab.com/3d-models/low-poly-tree-c174a97481c84cd1a6953d3e0bfe3d7f) by AAV's 3D Models (https://sketchfab.com/AAV_s_models) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

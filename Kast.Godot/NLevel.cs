@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Godot;
 
 namespace Kast.Godot;
@@ -21,12 +20,11 @@ public partial class NLevel : Node3D
     /// 生成一个刚体并挂到本关卡下，用 <paramref name="type"/> 作为它的外观与物理外形。
     /// 质量由 <see cref="NObject.SetType"/> 按 <c>Density × Scale²</c> 算出，不在这里给。
     /// </summary>
-    public NObject Spawn(NObjectType type,Vector3 position,Quaternion quaternion)
+    public NObject Spawn(NObjectType type,Transform3D transform)
     {
         var obj = new NObject
         {
-            Position = position,
-            Quaternion = quaternion
+            GlobalTransform=transform
         };
         AddChild(obj);
         obj.SetType(type);
@@ -34,28 +32,24 @@ public partial class NLevel : Node3D
     }
     /// <summary>
     /// 取本关卡的出生点：场景里名为 <c>CasterSpanwer</c> 的节点（<c>%</c> 唯一名）。
-    /// 没放这个节点的关卡（例如 <c>island.tscn</c>）退回用关卡原点，不视为错误——
+    /// 没放这个节点的关卡退回用关卡原点的变换，不视为错误——
     /// <c>GetNode</c> 找不到会直接抛异常，那样整个关卡都加载不了。
     /// </summary>
-    Vector3 SpawnPosition()
+    Transform3D SpawnPoint()
     {
-        return GetNodeOrNull<Node3D>("%CasterSpanwer")?.GlobalPosition ?? GlobalPosition;
+        return GetNodeOrNull<Node3D>("%CasterSpanwer")?.GlobalTransform ?? GlobalTransform;
     }
 
     /// <summary>
     /// 按模板场景造一个类型实例，可选地覆盖密度与缩放。
     /// 关卡里摆好的物体由 <see cref="ScanAndSpawn"/> 直接复用，不需要走这里。
     /// </summary>
-    public NObjectType CreateType(float? densityOverride,Vector3? scaleOverride)
+    public NObjectType CreateType(float? densityOverride)
     {
         var type=Helper.LoadScene<NObjectType>("Types/NCaster");
         if(densityOverride.HasValue)
         {
             type.Density=densityOverride.Value;
-        }
-        if(scaleOverride.HasValue)
-        {
-            type.Scale=scaleOverride.Value;
         }
         return type;
     }
@@ -66,7 +60,7 @@ public partial class NLevel : Node3D
         ScanAndSpawn(this);
         Camera = Helper.LoadScene<PlayerCamera>("PlayerCamera");
         AddChild(Camera);
-        Player = Spawn(CreateType(0.8f, Vector3.One*1f), SpawnPosition(), Quaternion.Identity);
+        Player = Spawn(CreateType(0.8f), SpawnPoint());
         var caster=(NCaster)Player.Type;
         caster.Spells=SaveSystem.Current.CasterSpells;
         Camera.Player = Player;
@@ -85,7 +79,7 @@ public partial class NLevel : Node3D
             ScanAndSpawn(child);
             if(child is NObjectType objType)
             {
-                Spawn(objType,objType.GlobalPosition,objType.Quaternion);
+                Spawn(objType,objType.GlobalTransform);
             }
         }
     }

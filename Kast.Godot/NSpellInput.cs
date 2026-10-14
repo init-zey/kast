@@ -26,7 +26,7 @@ public partial class NSpellInput : ColorRect
     [Export] public Label Transcript;
     /// <summary>当前显示的候补条目，按词形索引，用于复用而不必每次重建场景。</summary>
     public Dictionary<string,NSpellEntry> PredictionItems=new();
-    const float GridSize=40;
+    const float GridSize=80;
     /// <summary>当前这一笔尚未吸附到某个网格方向前的累计位移。</summary>
     Vector2 Accumulate;
     /// <summary>已画部分的屏幕原点，随每一笔推进。</summary>

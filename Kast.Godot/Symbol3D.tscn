@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bux26xrxl2x85"]
+
+[ext_resource type="Script" uid="uid://fhkbeasw4dto" path="res://NSymbol3d.cs" id="1_vo7ek"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ti6ob"]
+albedo_color = Color(0, 0, 0, 1)
+
+[node name="Symbol3d" type="MeshInstance3D" unique_id=2136618356]
+script = ExtResource("1_vo7ek")
+Size = Vector2(1, 1)
+Width = 0.1
+Material = SubResource("StandardMaterial3D_ti6ob")

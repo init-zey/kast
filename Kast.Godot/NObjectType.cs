@@ -11,6 +11,7 @@ namespace Kast.Godot;
 /// </remarks>
 public abstract partial class NObjectType : Node3D
 {
+    [Export] public string TypeName="object";
         /// <summary>是否按碰撞体外形自动摆放浮力采样点；关掉后只能自己往 <see cref="FluidInteractor"/> 里加。</summary>
     [Export] public bool UseCollisionShapes=true;
     /// <summary>泡在水里时的线性与角阻尼；出水后清零。</summary>
@@ -19,6 +20,8 @@ public abstract partial class NObjectType : Node3D
     public FluidInteractor3D FluidInteractor=new();
     /// <summary>密度，换算质量时与尺寸一起使用（见 <see cref="NLevel.ScanAndSpawn"/>）。</summary>
     [Export] public float Density=2.0f;
+    [Export] public bool AxisLockAngularXZ=false;
+    [Export] public bool IsStatic=false;
     /// <summary>宿主刚体，由 <see cref="NObject.SetType"/> 反向注入。</summary>
     public NObject Object;
     public bool IsFloaterInited=false;
@@ -29,5 +32,4 @@ public abstract partial class NObjectType : Node3D
     /// 本类型用于"显示"咒语的真实词名列表，由 <c>display</c> 动词逐词拼成词形画到界面上。
     /// 子类覆写以展示自己的名字。
     /// </summary>
-    public virtual string[] GetDisplayRealName()=>["thing"];
 }

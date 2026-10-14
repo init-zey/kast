@@ -1,0 +1,61 @@
+[gd_scene format=4 uid="uid://ckbg706mo2nn2"]
+
+[ext_resource type="Script" uid="uid://crklush8kbu4y" path="res://Types/NRock.cs" id="1_8st80"]
+[ext_resource type="Texture2D" uid="uid://dfrcwcu2c8mmd" path="res://Assets/Rock/rock_0.png" id="2_pif1d"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5tct8"]
+resource_name = "material_0"
+transparency = 2
+alpha_scissor_threshold = 0.05
+alpha_antialiasing_mode = 0
+cull_mode = 2
+albedo_texture = ExtResource("2_pif1d")
+texture_filter = 0
+texture_repeat = false
+metadata/_gltf_primary_texture_coord = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_en3fp"]
+_surfaces = [{
+"aabb": AABB(-0.5, 0, -0.5, 1.0808812, 0.72243685, 1.1437018),
+"format": 34896613377,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAQADAAIAAwAAAAIAAAAEAAEAAQAFAAMABAAFAAEAAwAGAAAABgAEAAAABQAGAAMABgAHAAQABAAHAAUABQAHAAYA"),
+"name": "material_0",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 8,
+"vertex_data": PackedByteArray("neFmrdADAAAJ/rcO//8AALbTC/vauwAAAAD//9q7AAD//8UDAAAAAAAAVAv//wAAAACcr9ADAAAAAAAAAAAAAA==")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_gvqx2"]
+resource_name = "blockbench_export_mesh"
+_surfaces = [{
+"aabb": AABB(-0.5, 0, -0.5, 1.0808812, 0.72243685, 1.1437018),
+"attribute_data": PackedByteArray("UFU/v6M1/3dbYj2KozU4wZyS/ytcSwoNXoAAAGJJ/yuYgv8/Z0VxdmBJ/z9egpV2/0P/S4cASwL/Q8YCAACES4cBUZX/L/9P/y82iQAAsFCvrv97T2mZmrhx/3t6rrub"),
+"format": 34896613399,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABAAHAAUACAAJAAoACAALAAkADAANAA4ADAAPAA0AEAARABIAEAATABEAFAAVABYAFAAXABUA"),
+"material": SubResource("StandardMaterial3D_5tct8"),
+"name": "material_0",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("neFmrdADB9sJ/rcO//8H27bTC/vauwfb///FAwAAB9sAAFQL//8AwAAAnK/QAwHAAAD//9q7AMAAAAAAAAABwAAA///au5v/neFmrdADm/+20wv72rub/wAAnK/QA5v////FAwAA5b4AAFQL///lvgn+tw7//+W+AAAAAAAA5b4J/rcO//8+wQAA///auz7BttML+9q7PsEAAFQL//8+wQAAnK/QA//////FAwAA//+d4Wat0AP//wAAAAAAAP///C4FI/wuBSP8LgUj/C4FIzGDZv5Sg1X+CYN6/nqDQf4HSJAAB0iQAAdIkAAHSJAAHwDXfh8A134fANd+HwDXfknsZxNJ7GcTSexnE0nsZxNafWkAWn1pAFp9aQBafWkA")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_en3fp")
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_pif1d"]
+points = PackedVector3Array(0.58088124, 0.010607432, -0.5, -0.5, 0, -0.5, -0.5, 0.4955792, -0.4829833, 0.45254248, 0.48928547, -0.4829833, 0.39382195, 0.708435, 0.33919233, 0.5725229, 0.041510414, 0.6437018, -0.5, 0.03196373, 0.6437018, -0.5, 0.7224368, 0.33919233)
+
+[node name="NRock" type="Node3D" unique_id=1306398831]
+script = ExtResource("1_8st80")
+TypeName = "rock"
+Density = 8.0
+
+[node name="mesh" type="MeshInstance3D" parent="." unique_id=233961486]
+mesh = SubResource("ArrayMesh_gvqx2")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=238339457]
+shape = SubResource("ConvexPolygonShape3D_pif1d")

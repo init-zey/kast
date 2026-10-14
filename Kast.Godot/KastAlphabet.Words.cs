@@ -15,17 +15,11 @@ public partial class KastAlphabet
 {
     void AddNouns()
     {
-        AddNoun(db.Gen("i",2), ctx => ctx.GetItem(".me") as NObject);   // 我
-        AddNoun(db.Gen("you",2), ctx => ctx.GetItem(".you") as NObject); // 你
-
-        // 天：既是名词（天空 / 向上 / 减轻），又能当二进制位 0。
-        // 两种读法靠旗标区分，词条本身不必知道自己在被当名词还是当位用：
-        // #bit 走位义；否则看 #be——有它是"成为"的宾语（改质量），没它是普通名词（取相对位置）。
-        //
-        // 地取"天"的镜像词形（Flip 是 q↔e、a↔d 的对合）：两个字在语义上一对相反
-        // （上/下、轻/重、0/1），画面上也就成一对手性相反的图形。
-        // PairGen 会同时把两个词形登记进翻译表与前缀树，缺一不可。
-        var (sky,earth)=db.PairGen("sky/air", "earth/solid", 4);
+        var (i,you) = db.PairGen("i","you",2);
+        AddNoun(i, ctx => ctx.GetItem(".me") as NObject);   // 我
+        AddNoun(you, ctx => ctx.GetItem(".you") as NObject); // 你
+        // 天/上/轻/0
+        var (sky,earth)=db.PairGen("0", "1", 4);
         RegisterBitWord(sky,(ctx) =>
         {
             if(ctx.GetFlag("#bit")) return 0;
@@ -40,7 +34,7 @@ public partial class KastAlphabet
             return null;
         });
 
-        // 地：与"天"相对，名词义为大地 / 向下 / 加重，位义为 1。
+        // 地/下/重/1
         RegisterBitWord(earth,(ctx) =>
         {
             if(ctx.GetFlag("#bit")) return 1;
@@ -54,15 +48,41 @@ public partial class KastAlphabet
             }
             return null;
         });
+
+        var (big,small) = db.PairGen("big","small",4);
+        AddNoun(big, (ctx) =>
+        {
+            if(ctx.GetItem(".s") is O subject)
+            {
+                if(ctx.GetFlag("#be"))
+                {
+                    return ScaleChanger(1f);
+                }
+            }
+            return null;
+        });
+        AddNoun(small, (ctx) =>
+        {
+            if(ctx.GetItem(".s") is O subject)
+            {
+                if(ctx.GetFlag("#be"))
+                {
+                    return ScaleChanger(-1f);
+                }
+            }
+            return null;
+        });
+
+        db.PairGen("plant","animal",4);
+        db.Gen("road",5);
+        db.Gen("more",5);
+        db.PairGen("leg","arm",5);
     }
 
     /// <summary>
     /// 登记一个"既能当名词又能当二进制位"的词：同一个值分别挂到 N / Num / Bit 三个范畴上。
+    /// 仅用2次。
     /// </summary>
-    /// <remarks>
-    /// 位词条要直接登记成 Num（而不是只登记 Bit），因为 CNF 文法没有一元规则，
-    /// 表达不了 <c>Num -&gt; Bit</c>：单个位必须自己就是数词。
-    /// </remarks>
     void RegisterBitWord(string token,O value)
     {
         AddNoun(token,value);       // N   -> 词（名词语义）
@@ -70,28 +90,21 @@ public partial class KastAlphabet
         AddWord(token,"Bit",value); // Bit -> 词（拼接时的右操作数）
     }
 
-    /// <summary>
-    /// "成为"的宾语负载：返回一个逐帧改密度的委托，由 <c>be</c> 动词交给目标执行。
-    /// <paramref name="sign"/> 为正是加重（地），为负是减轻（天）。
-    /// </summary>
-    O DensityChanger(float sign) => (ctx) =>
-        (Action<NObject>)(target =>
+    Action<NObject> DensityChanger(float sign) => 
+        target =>
         {
-            target.Type.Density=target.Type.Density+sign*(float)game.GetPhysicsProcessDeltaTime();
+            target.Type.Density=Math.Max(0,target.Type.Density+sign*(float)game.GetPhysicsProcessDeltaTime()*2);
             target.UpdateMass();
-        });
+            target.EnableAttractor();
+        };
 
-    /// <summary>逐帧缩放目标（"变大 / 变小"），并同步由尺寸决定的质量。</summary>
-    /// <remarks>
-    /// 待接词条：目前还没有词条指向它，见 <c>docs/demo-island-feasibility.md</c> 第 5 节第 3 步。
-    /// 已知限制：只改 <see cref="NObjectType.Scale"/>，<b>不会</b>同步碰撞体外形（碰撞体是在
-    /// <see cref="NObject.SetType"/> 里 reparent 过来的那批），缩得很小会出现"看得见、碰不着"。
-    /// 接词条之前需要先把缩放应用到碰撞形状上。
-    /// </remarks>
-    O ScaleChanger(float sign) => (ctx) =>
-        (Action<NObject>)(target =>
+    Action<NObject> ScaleChanger(float sign) =>
+        target =>
         {
-            target.Type.Scale=target.Type.Scale*(1+sign*(float)game.GetPhysicsProcessDeltaTime());
+            var newScale=target.Scale * (1 + sign * (float)game.GetPhysicsProcessDeltaTime()*0.5f);
+            if(newScale.X<0) return;
+            target.Scale = newScale;
             target.UpdateMass();
-        });
+            target.EnableAttractor();
+        };
 }

@@ -49,11 +49,11 @@ public partial class KastAlphabet
     }
 
     /// <summary>把数词的值统一成槽：终结数词（单独一个位）的负载要加 <c>#bit</c> 才读得出 0/1。</summary>
-    static NumSlot AsNum(object? value) => value as NumSlot
+    static NumSlot AsNum(object value) => value as NumSlot
         ?? new NumSlot(1, c => ((O)value!)(c.WithFlag("#bit")));
 
     /// <summary>Num -&gt; Num Bit：左边的数左移一位，再补上这一位。</summary>
-    static NumSlot AppendBit(object? high,object? low)
+    static NumSlot AppendBit(object high,object low)
     {
         var upper=AsNum(high);
         return new NumSlot(upper.Bits+1, c =>
@@ -64,7 +64,7 @@ public partial class KastAlphabet
     /// Vt -&gt; Vt Num：本段在高位，接到"已经绑好的低位段"前面；没有低位段就自成一段。
     /// 这样 <c>地天天地</c> 无论被切成几段数词宾语，动词拿到的都是同一个 9。
     /// </summary>
-    static Context BindNumber(Context ctx,object? num)
+    static Context BindNumber(Context ctx,object num)
     {
         var segment=AsNum(num);
         var lower=ctx.GetItem(".o") is O value&&value.Target is NumSlot slot?slot:null;

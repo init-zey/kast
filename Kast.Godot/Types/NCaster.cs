@@ -13,8 +13,6 @@ public partial class NCaster : NObjectType3D
     public Spell[] Spells;
 
     [Export] public AnimationTree AnimationTree;
-
-
     /// <summary><see cref="CheckSpell"/> 的返回值：输入的串读不出完整咒语，槽位没有改动。</summary>
     public const int SpellInputRejected=-1;
     /// <summary><see cref="CheckSpell"/> 的返回值：空输入（这次不施法）。</summary>
@@ -24,8 +22,10 @@ public partial class NCaster : NObjectType3D
     
     public override void NodeReady()
     {
-        Object.AxisLockAngularX = true;
-        Object.AxisLockAngularZ = true;
+        Object.GravityScale = 0f;
+        // 只锁翻转/侧倒，保留绕 Y 的转向（PlayerCamera 用角冲量驱动朝向）
+        // Object.AxisLockAngularX = true;
+        // Object.AxisLockAngularZ = true;
     }
 
     /// <summary>
@@ -76,5 +76,4 @@ public partial class NCaster : NObjectType3D
         }
         return SpellInputAccept;
     }
-    public override string[] GetDisplayRealName() => ["cast","thing"];
 }

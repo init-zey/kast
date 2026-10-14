@@ -68,11 +68,11 @@ public partial class NDictionary : Control
                 if(pair.Value==entryGame) continue;
                 if(pair.Value.Contains(entryGame))
                 {
-                    contained.Append($" [url={pair.Key}][color=lightblue]{pair.Key}[/color][/url] ");
+                    contained.Append($" [url={pair.Key}][color=darkblue]{pair.Key}[/color][/url] ");
                 }
                 else if (entryGame.Contains(pair.Value))
                 {
-                    contains.Append($" [url={pair.Key}][color=pink]{pair.Key}[/color][/url] ");
+                    contains.Append($" [url={pair.Key}][color=darkred]{pair.Key}[/color][/url] ");
                 }
             }
             ContainsInfo.Text=NLocalization.Format("info.contains",contains);
