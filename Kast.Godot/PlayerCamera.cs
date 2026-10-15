@@ -94,7 +94,7 @@ public partial class PlayerCamera : Node3D
     public float TargetRadius;
 
     // ---- 被操纵对象的运动参数 ----
-    [Export] public float Speed = 5f;
+    [Export] public float Speed = 3f;
     [Export] public float JumpHeight = 0.4f;
     [Export] public StringName JumpAction = "ui_accept";
     [Export] public float Ease = 12f;
@@ -106,7 +106,8 @@ public partial class PlayerCamera : Node3D
 
     float gravity;
     AnimationNodeStateMachinePlayback Playback;
-    RigidBody3D Body;
+    private float LastInputYaw;
+
 
     public bool IsEasing=>!Mathf.IsEqualApprox(Yaw,TargetYaw)||!Mathf.IsEqualApprox(Radius,TargetRadius);
 
@@ -146,48 +147,43 @@ public partial class PlayerCamera : Node3D
     /// <summary>驱动被操纵对象的刚体。刚体取对象的 Object 根节点。</summary>
     public override void _PhysicsProcess(double delta)
     {
-        Body??=Player?.Type?.Object;
-        if(Body==null)
-        {
-            return;
-        }
+        if(Player==null) return;
         var dt=(float)delta;
 
         var input=GetViewport().IsInputHandled()?new():Input.GetVector(MoveLeftAction,MoveRightAction,MoveBackAction,MoveForwardAction);
-        Playback??=Player.Type is NCaster caster
-            ?(AnimationNodeStateMachinePlayback)caster.AnimationTree?.Get("parameters/playback")
-            :null;
-        Playback?.Travel(input.LengthSquared()>0?"walk":"stop");
 
         // 移动方向基于相机自身朝向（压平到水平面）
         var forward=new Vector3(Basis.Z.X,0f,Basis.Z.Z).Normalized();
         var right=new Vector3(Basis.X.X,0f,Basis.X.Z).Normalized();
         var target=(right * input.X + forward * -input.Y) * Speed;
 
-        var velocity=Body.LinearVelocity;
+        var velocity=Player.LinearVelocity;
         var horizontal=new Vector3(velocity.X,0f,velocity.Z).Lerp(target,1f - Mathf.Exp(-Ease * dt));
-
         var vertical=velocity.Y;
-        if(OnFloor(Body))
+        if(Player.Type is IJumpable jumpable && jumpable.OnFloor())
         {
             vertical=Input.IsActionJustPressed(JumpAction)
                 ? Mathf.Sqrt(2f * gravity * JumpHeight) // v = sqrt(2gh)
-                : Mathf.Max(vertical,0f);
+                : vertical;
+        }
+
+        Player.LinearVelocity=new Vector3(horizontal.X,vertical,horizontal.Z);
+
+        if(input.LengthSquared()>0)
+        {
+            Player.Type.PlayAnimation("walk");
+            LastInputYaw=Mathf.Atan2(-target.X,-target.Z);
         }
         else
         {
-            vertical-=gravity * dt;
+            Player.Type.PlayAnimation("stop");
         }
-
-        Body.LinearVelocity=new Vector3(horizontal.X,vertical,horizontal.Z);
-
         // 转向移动方向
-        var targetYaw=Mathf.Atan2(-horizontal.X,-horizontal.Z);
         // var error=Mathf.Wrap(targetYaw-Body.Rotation.Y,-Mathf.Pi,Mathf.Pi);
         // const float TurnSpeed=8f;
         // var desired=Mathf.Clamp(error*TurnSpeed,-TurnSpeed,TurnSpeed);
         // Body.ApplyTorqueImpulse(new Vector3(0f,(desired-Body.AngularVelocity.Y)*Mathf.Max(Body.Inertia.Y,0.01f),0f));
-        Body.Rotation=new(0,Mathf.LerpAngle(Body.Rotation.Y,targetYaw,0.2f),0);
+        Player.Rotation=new(0,Mathf.LerpAngle(Player.Rotation.Y,LastInputYaw,0.3f),0);
     }
 
     /// <summary>跟随被操纵对象（只同步位置，不动相机朝向）。</summary>
@@ -274,17 +270,6 @@ public partial class PlayerCamera : Node3D
             return 1f;
         }
         return 1f-Mathf.Exp(-speed*dt);
-    }
-
-    /// <summary>脚下一根射线判断是否站在地面上。</summary>
-    private static bool OnFloor(RigidBody3D body)
-    {
-        var query=PhysicsRayQueryParameters3D.Create(
-            body.GlobalPosition + Vector3.Up * 0.5f * body.Scale.Y,
-            body.GlobalPosition + Vector3.Down * 0.5f * body.Scale.Y,
-            body.CollisionMask,
-            new global::Godot.Collections.Array<Rid> { body.GetRid() });
-        return body.GetWorld3D().DirectSpaceState.IntersectRay(query).Count > 0;
     }
 
     public void SelectionAdd()

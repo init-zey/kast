@@ -223,5 +223,4 @@ public partial class NObject : RigidBody3D
         }
         Type.FluidInteractor.FluidAreaExit(area);
     }
-
 }

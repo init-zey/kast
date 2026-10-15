@@ -10,7 +10,6 @@ SpringArm = NodePath("SpringArm3D")
 Pitch = -0.8
 
 [node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=575569361]
-collision_mask = 0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm3D" unique_id=1880569047]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)

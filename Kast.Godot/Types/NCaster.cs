@@ -7,12 +7,18 @@ using System;
 /// <summary>
 /// 施法者：只持有一份自己的咒语槽数据。移动、动画、选中等控制逻辑都在 PlayerCamera 里。
 /// </summary>
-public partial class NCaster : NObjectType3D
+public partial class NCaster : NObjectType3D, IJumpable
+
 {
     /// <summary>九个快捷槽里的咒语输入。</summary>
     public Spell[] Spells;
 
     [Export] public AnimationTree AnimationTree;
+    private AnimationNodeStateMachinePlayback Playback;
+    [Export] public Node3D Mouth;
+
+
+
     /// <summary><see cref="CheckSpell"/> 的返回值：输入的串读不出完整咒语，槽位没有改动。</summary>
     public const int SpellInputRejected=-1;
     /// <summary><see cref="CheckSpell"/> 的返回值：空输入（这次不施法）。</summary>
@@ -22,10 +28,7 @@ public partial class NCaster : NObjectType3D
     
     public override void NodeReady()
     {
-        Object.GravityScale = 0f;
-        // 只锁翻转/侧倒，保留绕 Y 的转向（PlayerCamera 用角冲量驱动朝向）
-        // Object.AxisLockAngularX = true;
-        // Object.AxisLockAngularZ = true;
+        Playback=(AnimationNodeStateMachinePlayback)AnimationTree.Get("parameters/playback");
     }
 
     /// <summary>
@@ -75,5 +78,16 @@ public partial class NCaster : NObjectType3D
             return SpellInputRejected;
         }
         return SpellInputAccept;
+    }
+    public override void PlayAnimation(string v)
+    {
+        Playback.Travel(v);
+    }
+
+    [Export] RayCast3D FloorRayCast;
+
+    public bool OnFloor()
+    {
+        return FloorRayCast.IsColliding();
     }
 }

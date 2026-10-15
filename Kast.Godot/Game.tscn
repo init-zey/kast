@@ -14,7 +14,10 @@
 [ext_resource type="Script" uid="uid://crsc18t17afto" path="res://keybinding_button.gd" id="10_yhmtn"]
 [ext_resource type="PackedScene" uid="uid://bq7ibhm0txl5p" path="res://addons/keychain/ShortcutEdit.tscn" id="10_yx171"]
 [ext_resource type="Script" uid="uid://cwkw52ohympqv" path="res://NPauseMenu.cs" id="11_pause"]
+[ext_resource type="Shader" uid="uid://dj78hqdj8ctop" path="res://Shaders/AnimatedMask.gdshader" id="13_0yprl"]
 [ext_resource type="Script" uid="uid://bgqou5nct7uex" path="res://NPointerHint.cs" id="13_lvtmh"]
+[ext_resource type="Texture2D" uid="uid://pcuobmohnuon" path="res://Assets/Masks/Circle.png" id="14_wuoie"]
+[ext_resource type="Script" uid="uid://bj1do68py221h" path="res://NAnimatedMask.cs" id="15_bvhbk"]
 [ext_resource type="Script" uid="uid://dvhl3a540qgto" path="res://NSubCamera.cs" id="16_elkpi"]
 
 [sub_resource type="Shader" id="Shader_0yprl"]
@@ -40,6 +43,12 @@ shader_parameter/bg_color = Color(0, 0, 0, 0.21568628)
 shader_parameter/node_size = Vector2(1024, 768)
 shader_parameter/offset = Vector2(0, 0)
 shader_parameter/hex_size = 20.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_udksl"]
+shader = ExtResource("13_0yprl")
+shader_parameter/mask = ExtResource("14_wuoie")
+shader_parameter/p0 = Vector2(0, 0)
+shader_parameter/val = 0.0
 
 [sub_resource type="Curve" id="Curve_2vekm"]
 _data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.7313144, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
@@ -115,6 +124,31 @@ render_target_update_mode = 4
 cull_mask = 1047554
 environment = SubResource("Environment_cpsxm")
 script = ExtResource("16_elkpi")
+
+[node name="TouchHud" type="Control" parent="." unique_id=1033830325]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VirtualJoystick" type="VirtualJoystick" parent="TouchHud" unique_id=437898523]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 146.0
+offset_top = 440.0
+offset_right = 186.0
+offset_bottom = 480.0
+grow_vertical = 0
+joystick_size = 216.0
+action_left = &"move_left"
+action_right = &"move_right"
+action_up = &"move_forward"
+action_down = &"move_back"
+visibility_mode = 1
 
 [node name="Hud" type="Control" parent="." unique_id=1947709548 node_paths=PackedStringArray("SpellInput", "SpellSymbol")]
 texture_filter = 1
@@ -312,6 +346,18 @@ anchors_preset = 12
 anchor_top = 1.0
 grow_vertical = 0
 
+[node name="AnimatedMask" type="ColorRect" parent="Hud" unique_id=1060196235]
+process_mode = 3
+texture_filter = 1
+material = SubResource("ShaderMaterial_udksl")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("15_bvhbk")
+
 [node name="Particles" type="GPUParticles3D" parent="." unique_id=413402243]
 emitting = false
 amount = 64
@@ -404,6 +450,7 @@ offset_right = -8.0
 offset_bottom = -49.0
 
 [node name="PointerHint" type="PanelContainer" parent="." unique_id=168970040]
+visible = false
 top_level = true
 anchors_preset = 8
 anchor_left = 0.5

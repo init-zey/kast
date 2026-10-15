@@ -4,8 +4,8 @@ spell_state.ready,Ready to cast,可以施法
 spell_state.wrong,Wrong spell,咒语错误
 spell_state.ambiguity,Ambiguous spell,咒语有歧义
 spell_state.crack,Cracked,破碎
-info.contains,It contains {0},包含{0}
-info.contained,It's contained by {0},被{0}包含
+info.contains,←{0},←{0}
+info.contained,→{0},→{0}
 menu.continue,Continue,继续游戏
 menu.new_game,New Game,新游戏
 menu.settings,Settings,设置

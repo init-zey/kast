@@ -77,6 +77,10 @@ public partial class NGame : Node3D
         // File.WriteAllText("words.csv",DB.Translation.AsText());//FIXME:DEBUG
         LoadLevel(pg.LevelID);
     }
+    public override void _Ready()
+    {
+        _=NAnimatedMask.Instance.Play(GD.Load<Texture>("res://Assets/Masks/Circle.png"),NAnimatedMask.Instance.Size/2,0f,1f,0.5f);
+    }
 
     /// <summary>存档占位：种子与翻译表现在由 <see cref="SaveSystem"/> 直接持有，这里暂无额外内容要写。</summary>
     public void SaveProgress(Progress pg)
@@ -202,5 +206,15 @@ public partial class NGame : Node3D
             PauseMenu.Toggle();
             GetViewport().SetInputAsHandled();
         }
+    }
+    public async void PlayerDie(string mask="Circle")
+    {
+        var player=ActiveCamera.Player;
+        ActiveCamera.Player=null;
+        player.LinearVelocity=new();
+        var playerPos=player.GlobalPosition;
+        player.Type.PlayAnimation("die");
+        await NAnimatedMask.Instance.Play(GD.Load<Texture>($"res://Assets/Masks/{mask}.png"),ActiveCamera.Camera.UnprojectPosition(playerPos),1f,0f,0.5f);
+        GetTree().ReloadCurrentScene();
     }
 }

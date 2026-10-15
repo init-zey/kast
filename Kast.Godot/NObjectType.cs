@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace Kast.Godot;
@@ -28,8 +29,16 @@ public abstract partial class NObjectType : Node3D
 
     /// <summary>设置轮廓颜色，由相机在选中/瞄准时驱动。</summary>
     public abstract void SetOutlineColor(Color color);
+
+    public virtual void PlayAnimation(string v) {}
+
     /// <summary>
     /// 本类型用于"显示"咒语的真实词名列表，由 <c>display</c> 动词逐词拼成词形画到界面上。
     /// 子类覆写以展示自己的名字。
     /// </summary>
+}
+
+public interface IJumpable
+{
+    public bool OnFloor();
 }
