@@ -86,5 +86,7 @@ words.csv.import
 *.bak
 *.orig
 *.rej
+# Blender 保存时自动留的上一版备份（Assets/*.blend 才是源文件）
+*.blend[0-9]
 Thumbs.db
 Desktop.ini

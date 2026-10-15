@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Kast"
 config/version="0.1.0"
-run/main_scene="uid://c8nqm3v1kha7e"
+run/main_scene="uid://coxu8p5b4oktw"
 config/features=PackedStringArray("4.7", "C#")
 
 [autoload]

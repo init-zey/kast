@@ -1,5 +1,6 @@
 using Godot;
 
+[GlobalClass]
 public partial class NFreeCam : Camera3D
 {
     [Export] public float MoveSpeed = 8.0f;          // 基础移动速度
