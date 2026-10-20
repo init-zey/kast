@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://bsp1d3rt3stlx"]
+
+[ext_resource type="Script" uid="uid://cntat3stl3v3l" path="res://Levels/NSpiderTest.cs" id="1_level"]
+[ext_resource type="PackedScene" uid="uid://b1l1v1ng0sp1d" path="res://Types/NSpider.tscn" id="2_spider"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_test"]
+
+[sub_resource type="Sky" id="Sky_test"]
+sky_material = SubResource("ProceduralSkyMaterial_test")
+
+[sub_resource type="Environment" id="Environment_test"]
+background_mode = 2
+sky = SubResource("Sky_test")
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+size = Vector3(100, 2, 100)
+
+[sub_resource type="StandardMaterial3D" id="GroundMat"]
+albedo_color = Color(0.29, 0.47, 0.24, 1)
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_5km41"]
+
+[sub_resource type="NavigationMesh" id="NavMesh"]
+agent_height = 0.8
+agent_radius = 0.6
+
+[node name="SpiderTest" type="Node3D" unique_id=2053356952]
+script = ExtResource("1_level")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1145841298]
+environment = SubResource("Environment_test")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2112732293]
+transform = Transform3D(0.8253356, 0.44229966, -0.3509874, 0, 0.62161, 0.7833269, 0.5646425, -0.6465076, 0.51303685, 0, 12, 0)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=1882793597]
+collision_layer = 3
+collision_mask = 3
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1371920453]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+mesh = SubResource("GroundMesh")
+surface_material_override/0 = SubResource("GroundMat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=1614166891]
+shape = SubResource("WorldBoundaryShape3D_5km41")
+
+[node name="CasterSpanwer" type="Node3D" parent="." unique_id=1768659529]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.5, 7)
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=600947793]
+navigation_mesh = SubResource("NavMesh")
+
+[node name="NSpider" parent="NavigationRegion3D" unique_id=718459971 instance=ExtResource("2_spider")]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 4.180748, 5)
+StandHeight = 12.0
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="NavigationRegion3D/NSpider" unique_id=1285668666]
+height = 0.8
+radius = 0.6
+max_speed = 3.0

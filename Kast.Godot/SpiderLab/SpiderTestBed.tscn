@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://bst3stb3d5p1d"]
+
+[ext_resource type="Script" uid="uid://ct3stb3d5p1dr" path="res://SpiderLab/NSpiderTestBed.cs" id="1_bed"]
+
+[node name="SpiderTestBed" type="Node3D"]
+script = ExtResource("1_bed")
+SpiderScale = 0.1
