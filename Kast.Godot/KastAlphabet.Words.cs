@@ -77,17 +77,26 @@ public partial class KastAlphabet
         db.Gen("road",5);
         db.Gen("more",5);
         db.PairGen("leg","arm",5);
+        db.PairGen("sea","land",5);
     }
 
     /// <summary>
-    /// 登记一个"既能当名词又能当二进制位"的词：同一个值分别挂到 N / Num / Bit 三个范畴上。
+    /// 登记一个"既能当名词又能当二进制位"的词：同一个值挂到 N / Num / Bit / Factor / Term / Expr 上。
     /// 仅用2次。
     /// </summary>
+    /// <remarks>
+    /// Factor / Term / Expr 让单个位也能直接参与四则运算；多位数由 <c>X -&gt; Num Bit</c>
+    /// 提升（见 <c>KastAlphabet.Numeral.cs</c>），因为 CNF 文法没有一元规则，
+    /// 不能事后把 Num 直接提升成 Factor。
+    /// </remarks>
     void RegisterBitWord(string token,O value)
     {
-        AddNoun(token,value);       // N   -> 词（名词语义）
-        AddWord(token,"Num",value); // Num -> 词（单独一个位也是一个数）
-        AddWord(token,"Bit",value); // Bit -> 词（拼接时的右操作数）
+        AddNoun(token,value);          // N      -> 词（名词语义）
+        AddWord(token,"Num",value);    // Num    -> 词（单独一个位也是一个数）
+        AddWord(token,"Bit",value);    // Bit    -> 词（拼接时的右操作数）
+        AddWord(token,"Factor",value); // Factor -> 词（乘除层的原子）
+        AddWord(token,"Term",value);   // Term   -> 词（乘除层的值）
+        AddWord(token,"Expr",value);   // Expr   -> 词（加减层的值）
     }
 
     Action<NObject> DensityChanger(float sign) => 

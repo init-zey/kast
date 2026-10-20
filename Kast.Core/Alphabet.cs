@@ -66,8 +66,8 @@ public class Alphabet<O> : Context
 
     /// <summary>
     /// 登记一个<b>及物</b>动词条目。及物动词同时属于 Vt 和 Vi 两个范畴：
-    /// Vt 供 "Vt -&gt; Vt N" 带宾语，Vi 供 "S -&gt; N V" 不带宾语。两个范畴都是一条终结产生式，
-    /// 因此不需要一元产生式，文法保持 CNF。
+    /// Vt 供带宾语的产生式使用（具体规则由语法装配方声明），Vi 供 "S -&gt; N V" 不带宾语。
+    /// 两个范畴都是一条终结产生式，因此不需要一元产生式，文法保持 CNF。
     /// </summary>
     public void AddTVerb(string name, Action<Context,O,O?> run)
     {

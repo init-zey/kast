@@ -16,7 +16,7 @@ namespace Kast.Godot;
 /// <item>本文件——装配入口、文法规则、负载形状转换；</item>
 /// <item><c>KastAlphabet.Words.cs</c>——名词（我/你/天/地）；</item>
 /// <item><c>KastAlphabet.Verbs.cs</c>——动词（到/看/成为/显示/施放）；</item>
-/// <item><c>KastAlphabet.Numeral.cs</c>——二进制数词（天=0、地=1）。</item>
+/// <item><c>KastAlphabet.Numeral.cs</c>——二进制数词、四则运算与有理数（天=0、地=1）。</item>
 /// </list>
 /// <para>
 /// <c>Kast.Core</c> 侧的负载类型是 <c>object</c>，取值前必须按范畴还原成委托形状，
@@ -48,7 +48,11 @@ public partial class KastAlphabet : Alphabet<O>
 
     // —— 文法 ——
     // 组合产生式保持 CNF：只有 A -> B C 与终结 A -> a，没有一元规则。
-    // 因此"及物动词也可不带宾语"不能靠 Vi -> Vt 表达，而是让及物动词同时声明 Vt 与 Vi 两个范畴。
+    // "及物动词也可不带宾语"不能靠 Vi -> Vt 表达，而是让及物动词同时声明 Vt 与 Vi 两个范畴。
+    //
+    // Vt 是"光杆及物动词"，VP 是"及物动词 + 恰好一个宾语"。宾语规则写成 VP -> Vt X
+    // 而不是旧的 Vt -> Vt X，是为了不把 VP 再放到宾语左边：那样一句话可以连续挂好几个数词宾语，
+    // 算术表达式就会被切成"前面的表达式当宾语、末尾几位当另一个宾语"的多种读法。
 
     void AddGrammar()
     {
@@ -57,16 +61,16 @@ public partial class KastAlphabet : Alphabet<O>
             (adj, noun) => NounOf((Context ctx) => NounOf(noun)(AdjectiveOf(adj)(ctx))));
 
         // 及物动词带宾语：宾语先求值并绑成 .o，再执行动词
-        Grammar.AddRule("Vt -> Vt N", (verb, obj) => PredicateOf((Context ctx) =>
+        Grammar.AddRule("VP -> Vt N", (verb, obj) => PredicateOf((Context ctx) =>
         {
             var inner=new Context(ctx);
             inner.Add(".o",ObjectOf(obj,ctx));
             return PredicateOf(verb)(inner);
         }));
 
-        // 主语加谓语成句
+        // 主语加谓语成句：不及物走 Vi，带宾语走 VP；光杆 Vt 不再单独成句。
         Grammar.AddRule("S -> N Vi", Sentence);
-        Grammar.AddRule("S -> N Vt", Sentence);
+        Grammar.AddRule("S -> N VP", Sentence);
 
         // 关系从句：Adv 只作占位，语义完全来自后面的句子（Adv 的负载不会被求值，见 Alphabet.Terminal）
         Grammar.AddRule("N -> Adv S", (adv, sentence) => (Func<Context,Context>)sentence);

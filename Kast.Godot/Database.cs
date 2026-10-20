@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using Kast.Core;
 
@@ -169,6 +170,110 @@ public class Database(int seed)
         var result=sb.ToString();
         Translation.RegisterRealToGame(word,result);
         return result;
+    }
+
+    /// <summary>
+    /// 把一个整数写成虚构文字：二进制、高位在左，0/1 分别换成已登记的「天/地」词形后首尾相接。
+    /// </summary>
+    /// <remarks>
+    /// 负数在前面加「negative」词形。只做"数 → 词形"的换算，不改翻译表、也不占用新词形，
+    /// 因此同一个数每次写出来都一样。需要的词（0/1、negative、over）还没登记、或已被词典删掉时
+    /// 返回空串——宁可让显示层什么都不画，也不要画出一个缺了几位的数。
+    /// </remarks>
+    /// <param name="value">要写出的整数。</param>
+    /// <returns>可直接绘制到界面上的词形串；无法写出时为空串。</returns>
+    public string NumberToGameWord(int value)=>NumberToGameWord(new BigInteger(value));
+
+    /// <summary>把整数写成虚构文字，支持负数与超出 <see cref="int"/> 范围的大整数。</summary>
+    public string NumberToGameWord(BigInteger value)
+    {
+        var text=new StringBuilder();
+        if(value.Sign<0)
+        {
+            if(!AppendWord(text,"negative"))
+            {
+                return string.Empty;
+            }
+            value=BigInteger.Abs(value);
+        }
+
+        foreach(var bit in BinaryDigits(value))
+        {
+            if(!AppendWord(text,bit=='0'?"0":"1"))
+            {
+                return string.Empty;
+            }
+        }
+        return text.ToString();
+    }
+
+    /// <summary>
+    /// 把有理数写成虚构文字：整数只写二进制；分数写成「分子 over 分母」；
+    /// 负数在最前面加「negative」。分母已经约到正数，所以分数线两边都不带符号。
+    /// </summary>
+    public string NumberToGameWord(Rational value)
+    {
+        var text=new StringBuilder();
+        if(value.Numerator.Sign<0)
+        {
+            if(!AppendWord(text,"negative"))
+            {
+                return string.Empty;
+            }
+        }
+
+        var numerator=NumberToGameWord(BigInteger.Abs(value.Numerator));
+        if(numerator.Length==0)
+        {
+            return string.Empty;
+        }
+        text.Append(numerator);
+
+        if(!value.Denominator.IsOne)
+        {
+            if(!AppendWord(text,"over"))
+            {
+                return string.Empty;
+            }
+            var denominator=NumberToGameWord(value.Denominator);
+            if(denominator.Length==0)
+            {
+                return string.Empty;
+            }
+            text.Append(denominator);
+        }
+        return text.ToString();
+    }
+
+    /// <summary>取一个真实词的词形并追加；该词还没登记时返回 false。</summary>
+    bool AppendWord(StringBuilder text,string realWord)
+    {
+        var glyph=Translation.GetGameWord(realWord);
+        if(glyph is null)
+        {
+            return false;
+        }
+        text.Append(glyph);
+        return true;
+    }
+
+    /// <summary>把一个非负整数写成二进制串；零写成单个 <c>0</c>。</summary>
+    static string BinaryDigits(BigInteger value)
+    {
+        if(value.IsZero)
+        {
+            return "0";
+        }
+
+        var digits=new StringBuilder();
+        while(!value.IsZero)
+        {
+            digits.Append((value&BigInteger.One).IsZero?'0':'1');
+            value>>=1;
+        }
+        var chars=digits.ToString().ToCharArray();
+        Array.Reverse(chars);
+        return new string(chars);
     }
 
     /// <summary>长度为 <paramref name="length"/> 的候选词形总数：首步 6 选，之后每步 5 选。</summary>

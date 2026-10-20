@@ -37,7 +37,7 @@ public partial class KastAlphabet
             if(o!=null)
             {
                 var target=o(ctx);
-                subject.ApplyCentralImpulse((target.GetPosition()-subject.GlobalPosition).Normalized()*Math.Min(subject.Mass,1.0f));
+                subject.ApplyCentralImpulse((target.GetPosition()-subject.GlobalPosition).Normalized()*Math.Min(subject.Mass,2.0f));
                 subject.EnableAttractor();
             }
             else
@@ -109,21 +109,62 @@ public partial class KastAlphabet
         });
     }
 
-    /// <summary>显示：把主语按其"可显示名"逐词拼成词形，在主界面上画出来并淡出。</summary>
+    /// <summary>
+    /// 显示：带数词宾语时把数值写成虚构文字；否则把主语按其"可显示名"逐词拼成词形，
+    /// 在主界面上画出来并淡出。
+    /// </summary>
     void AddDisplay()
     {
         AddTVerb(db.Gen("display",4), (ctx,s,o) =>
         {
-            if(s(ctx) is not NObjectType objType) return;
+            // 数词宾语优先：同一句话里的主语（例如"你"）只是施动者，不是要显示的东西。
+            if(o!=null&&TryShowNumber(o(ctx)))
+            {
+                return;
+            }
 
-            var symbol=game.GetNode<NDisplaySpellSymbol>("%DisplaySpellSymbol");
-            symbol.Spell.Angles.Clear();
-            symbol.Spell.Angles=db.Translation.GetGameWord(objType.TypeName).ToList();
-            symbol.Modulate=Colors.White;
-            symbol.Visible=true;
-            symbol.QueueRedraw();
+            var subject=s(ctx);
+            if(TryShowNumber(subject))
+            {
+                return;
+            }
+            if(subject is not NObjectType objType) return;
+
+            ShowSpell(db.Translation.GetGameWord(objType.TypeName));
             objType.Object?.EnableAttractor();
         });
+    }
+
+    /// <summary>
+    /// 值如果是数词，就把它写成虚构文字画出来并返回 true。
+    /// 整数保持 int（与旧动词一致），分数与大数则是 <see cref="Rational"/>。
+    /// </summary>
+    bool TryShowNumber(object value)
+    {
+        switch(value)
+        {
+            case int integer:
+                ShowSpell(db.NumberToGameWord(integer));
+                return true;
+            case Rational rational:
+                ShowSpell(db.NumberToGameWord(rational));
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>把一段游戏词形画到主界面上，并把淡出动画重新点亮；空串表示没有可显示的写法。</summary>
+    void ShowSpell(string glyphs)
+    {
+        if(string.IsNullOrEmpty(glyphs)) return;
+
+        var symbol=game.GetNode<NDisplaySpellSymbol>("%DisplaySpellSymbol");
+        symbol.Spell.Angles.Clear();
+        symbol.Spell.Angles=glyphs.ToList();
+        symbol.Modulate=Colors.White;
+        symbol.Visible=true;
+        symbol.QueueRedraw();
     }
 
     /// <summary>
