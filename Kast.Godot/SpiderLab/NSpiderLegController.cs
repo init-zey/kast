@@ -175,14 +175,12 @@ public partial class NSpiderLegController : Node3D
             }
         }
 
-        if (!_supported)
+        // 布娃娃已移除：所有悬空腿都用 IK 撑住（不再区分整只生物有没有支撑）。
+        for (int i = 0; i < _legs.Count; i++)
         {
-            for (int i = 0; i < _legs.Count; i++)
+            if (_legs[i].State == NSpiderLegState.Airborne)
             {
-                if (_legs[i].State == NSpiderLegState.Airborne)
-                {
-                    HoldLeg(_legs[i]);
-                }
+                HoldLeg(_legs[i]);
             }
         }
 
@@ -512,15 +510,8 @@ public partial class NSpiderLegController : Node3D
             return;
         }
 
+        // 布娃娃已移除：不再把抬腿送进物理，全部由 HoldLeg 用 IK 撑住。
         _ragdollNext.Clear();
-        for (int i = 0; i < _legs.Count; i++)
-        {
-            // 只有"被其它腿支撑着"的抬腿才做布娃娃；整只生物在自由落体时一律撑住姿态。
-            if (_legs[i].State == NSpiderLegState.Airborne && _supported)
-            {
-                _ragdollNext.Add(_legs[i].IkIndex);
-            }
-        }
 
         if (_ragdollNow.SetEquals(_ragdollNext))
         {

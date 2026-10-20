@@ -428,33 +428,17 @@ public abstract partial class NLivingObject : NObjectType3D
     // 布娃娃 API
     // ------------------------------------------------------------------
 
-    /// <summary>开关全身布娃娃：开启会停止移动，交由 PhysicalBone 物理驱动；关闭恢复。</summary>
+    /// <summary>
+    /// 布娃娃已移除。
+    ///
+    /// 原因：Godot 的 <c>PhysicalBone3D</c> 完全无视祖先缩放 —— 模拟时骨骼世界缩放恒为 1.0、
+    /// 关节把腿拉到"模型单位"的距离（实测 0.1 缩放的蜘蛛，骨骼被甩到离身体 8 个世界单位），
+    /// 于是整只生物被撑开、看着像放大了 10 倍。节点级补偿全部被引擎覆盖，所以不再启用。
+    /// 保留这个空实现只为不破坏调用方；移动与站立全部由 IK 负责。
+    /// </summary>
     public virtual void SetRagdoll(bool enabled)
     {
-        if (IsRagdoll == enabled)
-        {
-            return;
-        }
-        IsRagdoll = enabled;
-        if (enabled)
-        {
-            StopMoving();
-        }
-        if (PhysicalBones == null)
-        {
-            return;
-        }
-
-        PhysicalBones.Influence = RagdollInfluence;
-        if (enabled)
-        {
-            // 空数组 = 全身；模拟器会从当前骨骼姿态开始。
-            PhysicalBones.PhysicalBonesStartSimulation(new global::Godot.Collections.Array<StringName>());
-        }
-        else
-        {
-            PhysicalBones.PhysicalBonesStopSimulation();
-        }
+        // 布娃娃已移除：不做任何事。
     }
 
     /// <summary>在子树里深度优先找第一个 <typeparamref name="T"/>。</summary>

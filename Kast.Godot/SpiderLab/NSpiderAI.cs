@@ -106,13 +106,6 @@ public partial class NSpiderAI : Node
             }
         }
 
-        // 布娃娃期间不指挥移动。
-        if (_spider.IsRagdoll)
-        {
-            SetState(AiState.Idle);
-            return;
-        }
-
         _stateTime += delta;
         _rescanTimer -= delta;
         if (_rescanTimer <= 0.0)
