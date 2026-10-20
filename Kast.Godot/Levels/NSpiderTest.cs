@@ -51,11 +51,6 @@ public partial class NSpiderTest : NLevel
             return;
         }
 
-        bool ragdollKey = Input.IsPhysicalKeyPressed(Key.R);
-        if (ragdollKey != _living.IsRagdoll)
-        {
-            _living.SetRagdoll(ragdollKey);
-        }
         // 变异时按 F9 打一份缩放数据，方便定位"失去缩放效果"。
         bool scaleKey = Input.IsPhysicalKeyPressed(Key.F9);
         if (scaleKey && !_scaleKeyHeld)
@@ -63,11 +58,6 @@ public partial class NSpiderTest : NLevel
             DumpScale("F9");
         }
         _scaleKeyHeld = scaleKey;
-
-        if (_living.IsRagdoll)
-        {
-            return;
-        }
 
         // 追击 AI 接管期间不巡逻：两边都调 MoveTo 会互相打断，蜘蛛会走一步停一步。
         if (_ai != null && _ai.AiEnabled && _ai.State != NSpiderAI.AiState.Idle)

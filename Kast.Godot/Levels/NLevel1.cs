@@ -10,5 +10,9 @@ public partial class NLevel1 : NLevel
         {
             NGame.Instance.PlayerDie();
         }
+        if(NGame.Instance.ActiveCamera.Player.Position.DistanceSquaredTo(new())>100*100)
+        {
+            NGame.Instance.DemoEnd();
+        }
     }
 }

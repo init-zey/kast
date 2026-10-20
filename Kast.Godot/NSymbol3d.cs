@@ -1,23 +1,38 @@
-using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using Godot;
 using Kast.Godot;
 
-public partial class NSymbol3d : MeshInstance3D
+public partial class NSymbol3d : NObjectType
 {
     [Export] public string[] RealWords;
     [Export] public Vector2 Size;
     [Export] public float Width;
     [Export] public BaseMaterial3D Material;
+    [Export] MeshInstance3D MeshInstance;
     public override void _Ready()
     {
+        Layer=4;
+        TypeName="cast";
+        IsStatic=true;
+        var spell=new Spell();
+        spell.BuildFromRealWord(RealWords,NGame.Instance.DB.Translation);
+        var shape=new CollisionShape3D();
+        var box=new BoxShape3D();
+        box.Size=new(Size.X,Size.Y,0.1f);
+        shape.Shape=box;
+        AddChild(shape);
+        SetSymbol(spell.Angles);
     }
 
-    static Vector2 PlacePoint(Vector2 p, Vector2 o, float s)    {
-        return (p - o) * s;
+    Vector2 PlacePoint(Vector2 p, Vector2 o, float s) {
+        var result=(p - o) * s - Size/2;
+        result.Y=-result.Y;
+        return result;
     }
 
-    private void SetSymbol(string angleChars)
+    private void SetSymbol(IEnumerable<char> angleChars)
     {
         var rect=GridHelper.GetRect(angleChars);
         float s;
@@ -33,15 +48,18 @@ public partial class NSymbol3d : MeshInstance3D
         var path=new List<Vector2>();
         var tail=new Vector2();
         var angle=0;
-        path.Add(tail);
+        path.Add(PlacePoint(tail,o,s));
+        tail+=GridHelper.AngleToVec(angle);
+        path.Add(PlacePoint(tail,o,s));
         foreach(var c in angleChars)
         {
             angle=GridHelper.GetAngle(angle,c);
             tail += GridHelper.AngleToVec(angle);
             path.Add(PlacePoint(tail,o,s));
         }
-        Mesh=GenerateMesh(path,1,Width);
-        Mesh.SurfaceSetMaterial(0,Material);
+        var mesh=GenerateMesh(path,1,Width);
+        mesh.SurfaceSetMaterial(0,Material);
+        MeshInstance.Mesh=mesh;
     }
     public static Mesh GenerateMesh(
     List<Vector2> path,
@@ -52,7 +70,7 @@ public partial class NSymbol3d : MeshInstance3D
         if (path == null || path.Count < 2) return null;
 
         int n = path.Count;
-        float hw = width * 0.5f;
+        float hw(int i) => Mathf.Exp(-(float)i/n) * width * 0.5f;
         float circleRadius=0.5f;
 
         // ---- 1. 缩放后的路径点 ----
@@ -74,10 +92,10 @@ public partial class NSymbol3d : MeshInstance3D
         var leftPts  = new Vector2[n];
         var rightPts = new Vector2[n];
 
-        leftPts[0]      = P[0]      + normals[0]     * hw;
-        rightPts[0]     = P[0]      - normals[0]     * hw;
-        leftPts[n - 1]  = P[n - 1]  + normals[n - 2] * hw;
-        rightPts[n - 1] = P[n - 1]  - normals[n - 2] * hw;
+        leftPts[0]      = P[0]      + normals[0]     * hw(0);
+        rightPts[0]     = P[0]      - normals[0]     * hw(1);
+        leftPts[n - 1]  = P[n - 1]  + normals[n - 2] * hw(n-1);
+        rightPts[n - 1] = P[n - 1]  - normals[n - 2] * hw(n);
 
         for (int i = 1; i < n - 1; i++)
         {
@@ -87,14 +105,14 @@ public partial class NSymbol3d : MeshInstance3D
 
             if (denom < 1e-4f)
             {
-                leftPts[i]  = P[i] + n0 * hw;
-                rightPts[i] = P[i] - n0 * hw;
+                leftPts[i]  = P[i] + n0 * hw(i);
+                rightPts[i] = P[i] - n0 * hw(i+1);
             }
             else
             {
                 Vector2 miter = (n0 + n1) / denom;
-                leftPts[i]  = P[i] + miter * hw;
-                rightPts[i] = P[i] - miter * hw;
+                leftPts[i]  = P[i] + miter * hw(i);
+                rightPts[i] = P[i] - miter * hw(i+1);
             }
         }
 
@@ -110,10 +128,23 @@ public partial class NSymbol3d : MeshInstance3D
         // 4.2 每个路径点处加一个圆盘
         for (int i = 0; i < n; i++)
         {
-            gen.AddDisc(P[i], width * (1+circleRadius), discSegments);
-            circleRadius *= 0.5f;
+            gen.AddDisc(P[i], hw(i)+width*circleRadius, discSegments);
         }
 
         return gen.Commit();
     }
+
+    public override void SetOutlineColor(Color color)
+    {
+        if(color.A==0)
+        {
+            Material.EmissionEnabled=false;
+        }
+        else
+        {
+            Material.EmissionEnabled=true;
+            Material.Emission=color;
+        }
+    }
+
 }

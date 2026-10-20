@@ -1,6 +1,6 @@
 shader_type canvas_item;
 
-uniform sampler2D mask : hint_default_white, filter_nearest;
+uniform sampler2D mask : hint_default_white, filter_linear;
 uniform vec2 p0;
 uniform float val;
 

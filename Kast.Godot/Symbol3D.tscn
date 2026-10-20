@@ -5,8 +5,14 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ti6ob"]
 albedo_color = Color(0, 0, 0, 1)
 
-[node name="Symbol3d" type="MeshInstance3D" unique_id=2136618356]
+[sub_resource type="QuadMesh" id="QuadMesh_udksl"]
+
+[node name="Symbol3d" type="Node3D" unique_id=1096005323 node_paths=PackedStringArray("MeshInstance")]
 script = ExtResource("1_vo7ek")
 Size = Vector2(1, 1)
 Width = 0.1
 Material = SubResource("StandardMaterial3D_ti6ob")
+MeshInstance = NodePath("MeshInstance3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1836865550]
+mesh = SubResource("QuadMesh_udksl")
