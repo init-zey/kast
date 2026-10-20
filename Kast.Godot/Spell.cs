@@ -100,7 +100,15 @@ public class Spell
     {
         foreach(var realWord in realWords)
         {
-            Angles.AddRange(translation.GetGameWord(realWord));
+            var gameWord=translation.GetGameWord(realWord);
+            if(gameWord!=null)
+            {
+                Angles.AddRange(gameWord);
+            }
+            else
+            {
+                GD.Print($"word {realWord} not found in tranlsation.");
+            }
         }
     }
 }

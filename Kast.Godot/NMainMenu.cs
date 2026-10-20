@@ -1,4 +1,3 @@
-using System;
 using Godot;
 
 namespace Kast.Godot;
@@ -34,6 +33,7 @@ public partial class NMainMenu : Control
     [Export] Button BackButton;
     [Export] Label VersionLabel;
     [Export] ConfirmationDialog ConfirmNewDialog;
+    [Export] string InitLevel;
 
     public override void _Ready()
     {
@@ -199,8 +199,18 @@ public partial class NMainMenu : Control
             Seed=0,
             // Seed=(int)(GD.Randi()&0x7FFFFFFF),
             PlayerTranslation=new(),
-            LevelID="1",
-            CasterSpells=[]
+            LevelID=InitLevel,
+            CasterSpells = [
+                new(),
+                new(),
+                new(),
+                new(),
+                new(),
+                new(),
+                new(),
+                new(),
+                new()
+            ]
         };
         SaveSystem.SaveProgress();
         GetTree().ChangeSceneToFile(GameScene);

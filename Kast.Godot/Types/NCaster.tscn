@@ -351,6 +351,7 @@ Mouth = NodePath("Mouth")
 FloorRayCast = NodePath("RayCast3D")
 TypeName = "caster"
 Density = 1.0
+AxisLockAngularXZ = true
 
 [node name="AnimationTree" type="AnimationTree" parent="." unique_id=905154398]
 root_node = NodePath("../blockbench_export")

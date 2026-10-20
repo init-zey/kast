@@ -5,6 +5,13 @@ namespace Kast.Godot;
 
 public partial class NObject : RigidBody3D
 {
+    /// <summary>
+    /// 可瞄准层（层 3 = 值 4）。<see cref="PlayerCamera.AimCollisionMask"/> 默认只打这一层，
+    /// 所有 <see cref="NObject"/> 都会自动带上它，类型不必自己写。
+    /// 骨骼（<see cref="PhysicalBone3D"/>）静止时只挂这一层且掩码为 0，纯粹当瞄准靶用。
+    /// </summary>
+    public const uint AimLayer=4u;
+
     [Export] public NObjectType Type;
     float TurnSpeed=8f;
     [Export] GpuParticlesAttractorSphere3D ParticleAttractor;
@@ -21,6 +28,24 @@ public partial class NObject : RigidBody3D
     {
         Mass=Scale.Dot(Scale)*Type.Density;
     }
+
+    /// <summary>
+    /// 从任意子节点往上找它所属的 <see cref="NObject"/>（节点自己就是的话直接返回）。
+    /// 瞄准射线打到的可能是骨骼刚体（<see cref="PhysicalBone3D"/>）而不是躯干，
+    /// 靠这个把"打中一条腿"和"打中这只蜘蛛"归成同一件事。
+    /// </summary>
+    public static NObject OwnerOf(Node node)
+    {
+        while(node!=null)
+        {
+            if(node is NObject obj)
+            {
+                return obj;
+            }
+            node=node.GetParent();
+        }
+        return null;
+    }
     public void SetType(NObjectType type)
     {
         if(type==Type) return;
@@ -32,6 +57,11 @@ public partial class NObject : RigidBody3D
         }
         Type=type;
         Type.Object=this;
+        // 碰撞层由类型声明，再自动带上"可瞄准层"（层 3 = 值 4）：地形、活物、道具
+        // 各自在 Types/*.tscn 里写清楚自己能撞什么，而"能不能被瞄准射线打到"人人都有。
+        // 必须在 AddChild(Type) 之前赋值——类型的 _Ready 里要读宿主的层去初始化骨骼碰撞。
+        CollisionLayer=Type.Layer | AimLayer;
+        CollisionMask=Type.Mask;
         var prevParent=Type.GetParentOrNull<Node>();
         if(prevParent!=null)
         {
@@ -202,8 +232,8 @@ public partial class NObject : RigidBody3D
         }
         else
         {
-            LinearDamp=0f;
-            AngularDamp=0f;
+            LinearDamp=0.1f;
+            AngularDamp=0.1f;
         }
     }
 

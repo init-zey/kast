@@ -33,3 +33,5 @@ pause.resume,Resume,返回游戏
 pause.quit,"Save and Return To Menu",保存并返回
 pause.quit_confirm_title,Return to menu?,返回菜单？
 pause.quit_confirm_body,"World will reset and you will return to the main menu. This cannot be undone.","世界会被重置，然后返回菜单。此操作不可撤销。"
+touch.mode.draw,Draw,作画
+touch.mode.cast,Cast,施法

@@ -79,7 +79,7 @@ public partial class NPauseMenu : Control
     }
 
     /// <summary>保存当前进度并返回主菜单（确认放弃时走这里）。</summary>
-    void Quit()
+    public void Quit()
     {
         NGame.Instance.SaveProgress(SaveSystem.Current);
         SaveSystem.SaveProgress();

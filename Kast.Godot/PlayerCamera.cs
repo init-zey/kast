@@ -25,9 +25,12 @@ public partial class PlayerCamera : Node3D
     /// <summary>鼠标射线最大长度（米）。长度 0 会让 Godot 收到 to==from 的零长度射线，永远打不中，所以这里兜底成 1000。</summary>
     [Export]
     public float AimRayLength;
-    /// <summary>鼠标射线检测的碰撞层。</summary>
+    /// <summary>
+    /// 鼠标射线检测的碰撞层。默认只打层 3（值 4）= "可瞄准层"：
+    /// 物体在 <see cref="NObjectType.Layer"/> 里带上 4 才会被瞄准，跟"能不能撞"分开。
+    /// </summary>
     [Export(PropertyHint.Layers3DPhysics)]
-    public uint AimCollisionMask=1;
+    public uint AimCollisionMask=4;
 
     /// <summary>未瞄准时恢复的轮廓色。</summary>
     [Export]
@@ -130,7 +133,7 @@ public partial class PlayerCamera : Node3D
         }
         else
         {
-            inputRotation=Input.GetAxis(YawRightAction,YawLeftAction);
+            inputRotation=Input.GetAxis(YawLeftAction,YawRightAction);
         }
         TargetYaw-=inputRotation*YawSpeed*dt;
         TargetRadius=Mathf.Clamp(TargetRadius-Input.GetAxis(RadiusOutAction,RadiusInAction)*RadiusSpeed*dt,MinRadius,MaxRadius);
@@ -167,8 +170,8 @@ public partial class PlayerCamera : Node3D
                 : vertical;
         }
 
-        Player.LinearVelocity=new Vector3(horizontal.X,vertical,horizontal.Z);
 
+        Player.LinearVelocity=new Vector3(horizontal.X,vertical,horizontal.Z);
         if(input.LengthSquared()>0)
         {
             Player.Type.PlayAnimation("walk");
@@ -179,11 +182,12 @@ public partial class PlayerCamera : Node3D
             Player.Type.PlayAnimation("stop");
         }
         // 转向移动方向
-        // var error=Mathf.Wrap(targetYaw-Body.Rotation.Y,-Mathf.Pi,Mathf.Pi);
-        // const float TurnSpeed=8f;
-        // var desired=Mathf.Clamp(error*TurnSpeed,-TurnSpeed,TurnSpeed);
-        // Body.ApplyTorqueImpulse(new Vector3(0f,(desired-Body.AngularVelocity.Y)*Mathf.Max(Body.Inertia.Y,0.01f),0f));
-        Player.Rotation=new(0,Mathf.LerpAngle(Player.Rotation.Y,LastInputYaw,0.3f),0);
+        var targetYaw=Mathf.LerpAngle(Player.Rotation.Y,LastInputYaw,0.3f);
+        var error=Mathf.Wrap(targetYaw-Player.Rotation.Y,-Mathf.Pi,Mathf.Pi);
+        const float TurnSpeed=32f;
+        var desired=Mathf.Clamp(error*TurnSpeed,-TurnSpeed,TurnSpeed);
+        Player.ApplyTorqueImpulse(new Vector3(0f,(desired-Player.AngularVelocity.Y)*Mathf.Max(Player.Inertia.Y,0.01f*Player.Mass),0f));
+        // Player.Rotation=new(Player.Rotation.X,Mathf.LerpAngle(Player.Rotation.Y,LastInputYaw,0.3f),Player.Rotation.Z);
     }
 
     /// <summary>跟随被操纵对象（只同步位置，不动相机朝向）。</summary>
@@ -228,12 +232,10 @@ public partial class PlayerCamera : Node3D
         var hit=GetWorld3D().DirectSpaceState.IntersectRay(query);
 
         var collider=hit.Count>0?((Node3D)hit["collider"]):null;
-        NObject aim=null;
-        if(collider is NObject aimObj)
-        {
-            if(aimObj==Aim) return;
-            aim=aimObj;
-        }
+        // 命中的可能是骨骼刚体而不是躯干，往上找它所属的 NObject：
+        // 这样"瞄准蜘蛛的一条腿"和"瞄准它的身体"是同一件事。
+        NObject aim=NObject.OwnerOf(collider);
+        if(aim!=null && aim==Aim) return;
         AimPoint=hit.Count>0?hit["position"].AsVector3():to;
         if(Aim!=null)
         {

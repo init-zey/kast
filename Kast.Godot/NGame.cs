@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 using Kast.Core;
@@ -53,26 +54,6 @@ public partial class NGame : Node3D
         Alphabet=new KastAlphabet();
         Alphabet.Init(this,DB);
         Alphabet.SetupTokenizer();
-        if(pg.CasterSpells.Length==0)
-        {
-            var firstSpell=new Spell(){
-                FirstDir='w',
-                Angles=new()
-            };
-            firstSpell.BuildFromRealWord(["that","you","be","display"],DB.Translation);
-            pg.CasterSpells =
-            [
-                firstSpell,
-                new(),
-                new(),
-                new(),
-                new(),
-                new(),
-                new(),
-                new(),
-                new()
-            ];
-        }
         SaveSystem.Current.PlayerTranslation=DB.Translation;//FIXME:DEBUG
         // File.WriteAllText("words.csv",DB.Translation.AsText());//FIXME:DEBUG
         LoadLevel(pg.LevelID);
@@ -216,5 +197,15 @@ public partial class NGame : Node3D
         player.Type.PlayAnimation("die");
         await NAnimatedMask.Instance.Play(GD.Load<Texture>($"res://Assets/Masks/{mask}.png"),ActiveCamera.Camera.UnprojectPosition(playerPos),1f,0f,0.5f);
         GetTree().ReloadCurrentScene();
+    }
+
+    internal async void DemoEnd()
+    {
+        var player=ActiveCamera.Player;
+        ActiveCamera.Player=null;
+        player.LinearVelocity=new();
+        var playerPos=player.GlobalPosition;
+        await NAnimatedMask.Instance.Play(GD.Load<Texture>($"res://Assets/Masks/DemoEnd.png"),ActiveCamera.Camera.UnprojectPosition(playerPos),1f,0f,2f);
+        PauseMenu.Quit();
     }
 }

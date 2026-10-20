@@ -33,6 +33,7 @@ FullscreenButton = NodePath("Root/SettingsPanel/Box/FullscreenRow/FullscreenButt
 BackButton = NodePath("Root/SettingsPanel/Box/BackButton")
 VersionLabel = NodePath("VersionLabel")
 ConfirmNewDialog = NodePath("ConfirmNewDialog")
+InitLevel = "1"
 
 [node name="Backdrop" type="TextureRect" parent="." unique_id=848378410]
 material = SubResource("ShaderMaterial_8iifg")

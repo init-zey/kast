@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Kast"
 config/version="0.1.0"
-run/main_scene="uid://coxu8p5b4oktw"
+run/main_scene="uid://c8nqm3v1kha7e"
 config/features=PackedStringArray("4.7", "C#")
 
 [autoload]
@@ -121,6 +121,10 @@ dict_toggle={
 ]
 }
 
+[input_devices]
+
+pointing/emulate_mouse_from_touch=false
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://Localization/strings.en.translation", "res://Localization/strings.zh_CN.translation")
@@ -128,12 +132,12 @@ locale/fallback="zh_CN"
 
 [physics]
 
+3d/run_on_separate_thread=true
 3d/physics_engine="Jolt Physics"
 
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
-rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/msaa_2d=1
 anti_aliasing/quality/msaa_3d=1

@@ -23,6 +23,16 @@ public abstract partial class NObjectType : Node3D
     [Export] public float Density=2.0f;
     [Export] public bool AxisLockAngularXZ=false;
     [Export] public bool IsStatic=false;
+    /// <summary>
+    /// 实体化后的刚体所在的碰撞层（写到 <see cref="NObject.CollisionLayer"/>）。
+    /// 约定：层 1 = 世界默认，层 2 = 地形（活物踩的），层 3（值 4）= 可瞄准。
+    /// </summary>
+    [Export] public uint Layer=1u;
+    /// <summary>
+    /// 实体化后的刚体与之碰撞的层（写到 <see cref="NObject.CollisionMask"/>）。
+    /// 活物一般填 2：只和地形碰，不会去推挤层 1 的玩家和道具。
+    /// </summary>
+    [Export] public uint Mask=1u;
     /// <summary>宿主刚体，由 <see cref="NObject.SetType"/> 反向注入。</summary>
     public NObject Object;
     public bool IsFloaterInited=false;
