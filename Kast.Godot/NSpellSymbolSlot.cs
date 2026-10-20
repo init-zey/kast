@@ -1,9 +1,10 @@
 using Godot;
 using Kast.Core;
+using Kast.Godot;
 
 /// <summary>
 /// "一个框 + 一条词形"的通用基类：咒语槽与词典条目都由它派生，
-/// 负责选中/未选中的描边与底色切换。
+/// 负责选中/未选中的描边与底色切换，以及点按选中。
 /// </summary>
 /// <remarks>
 /// 三个 <see langword="required"/> 字段由创建方（<c>NSpellSlots.CreateSlot</c>、
@@ -12,6 +13,8 @@ using Kast.Core;
 /// </remarks>
 public partial class NSpellSymbolSlot : PanelContainer
 {
+    /// <summary>在九宫格里的序号（0 起）；词典条目、预览条目为 -1。</summary>
+    public int SlotIndex=-1;
     /// <summary>未选中时的词形颜色。</summary>
     public static Color SymbolNormalColor=Colors.White;
     /// <summary>选中时的词形颜色。</summary>
@@ -30,6 +33,40 @@ public partial class NSpellSymbolSlot : PanelContainer
     public override void _Ready()
     {
         AddThemeStyleboxOverride("panel", PanelStyle);
+    }
+
+    /// <summary>
+    /// 点按选中：触摸按下或鼠标左键（<c>select</c> 动作）都走这里。
+    /// 咒语槽（<see cref="SlotIndex"/> ≥ 0）切到对应槽位，其余条目按普通条目选中。
+    /// </summary>
+    public override void _GuiInput(InputEvent @event)
+    {
+        if(!IsSelectPress(@event))
+        {
+            return;
+        }
+        if(SlotIndex>=0&&NGame.Instance.SpellSlots!=null)
+        {
+            NGame.Instance.SpellSlots.SelectSlot(SlotIndex);
+        }
+        else
+        {
+            NGame.Instance.SetSelectedSymbolSlot(this);
+        }
+        AcceptEvent();
+    }
+
+    /// <summary>
+    /// 触摸按下总是可选中；鼠标左键只在词典条目（<see cref="SlotIndex"/> &lt; 0）上生效，
+    /// 咒语槽在非移动端仍沿用原有的数字键/滚轮切换。
+    /// </summary>
+    bool IsSelectPress(InputEvent @event)
+    {
+        if(@event is InputEventScreenTouch touch)
+        {
+            return touch.Pressed;
+        }
+        return SlotIndex<0&&@event.IsActionPressed("select");
     }
 
     /// <summary>切回未选中外观。</summary>

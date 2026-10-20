@@ -49,14 +49,7 @@ public partial class NSpellEntry : NSpellSymbolSlot
             GetViewport().SetInputAsHandled();
         }
     }
-    /// <summary>请求把这条词条切到编辑态（点选或从悬停提示点进来）。</summary>
-    public override void _GuiInput(InputEvent @event)
-    {
-        if(@event.IsActionPressed("select"))
-        {
-            NGame.Instance.SetSelectedSymbolSlot(this);
-        }
-    }
+    // 点按选中由基类 NSpellSymbolSlot._GuiInput 统一处理（触摸/左键），这里不再覆盖。
     /// <summary>进入编辑态：输入框可编辑并取得焦点，同时让词典面板显示包含关系。</summary>
     public override void Active()
     {

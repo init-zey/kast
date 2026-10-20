@@ -30,7 +30,8 @@ public partial class NSpellSlots : Control
         {
             Symbol=symbol,
             CustomMinimumSize=size,
-            Translation=SaveSystem.Current.PlayerTranslation
+            Translation=SaveSystem.Current.PlayerTranslation,
+            SlotIndex=number-1,
         };
         slot.AddChild(symbol);
         Grid.AddChild(slot);
