@@ -1,4 +1,4 @@
-[gd_resource type="NoiseTexture2D" load_steps=3 format=3 uid="uid://bnxoe68bx2aix"]
+[gd_resource type="NoiseTexture2D" format=3 uid="uid://bnxoe68bx2aix"]
 
 [sub_resource type="Gradient" id="Gradient_lqoem"]
 colors = PackedColorArray(0.979812, 0.979812, 0.979812, 1, 0, 0, 0, 1)
@@ -14,7 +14,7 @@ domain_warp_type = 2
 [resource]
 width = 256
 height = 256
+noise = SubResource("FastNoiseLite_arjsd")
+color_ramp = SubResource("Gradient_lqoem")
 seamless = true
 seamless_blend_skirt = 0.636
-color_ramp = SubResource("Gradient_lqoem")
-noise = SubResource("FastNoiseLite_arjsd")

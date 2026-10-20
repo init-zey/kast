@@ -1,4 +1,4 @@
-[gd_resource type="NoiseTexture2D" load_steps=3 format=3 uid="uid://dr0noev4cg86t"]
+[gd_resource type="NoiseTexture2D" format=3 uid="uid://dr0noev4cg86t"]
 
 [sub_resource type="Gradient" id="Gradient_v4ahr"]
 interpolation_mode = 2
@@ -17,8 +17,8 @@ fractal_gain = 2.46
 [resource]
 width = 256
 height = 256
-seamless = true
-seamless_blend_skirt = 0.564
-normalize = false
-color_ramp = SubResource("Gradient_v4ahr")
 noise = SubResource("FastNoiseLite_lyiw1")
+color_ramp = SubResource("Gradient_v4ahr")
+seamless = true
+normalize = false
+seamless_blend_skirt = 0.564
